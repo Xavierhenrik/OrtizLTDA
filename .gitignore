@@ -1,0 +1,14 @@
+# Ignorar dependências do Node.js
+node_modules/
+
+# Ignorar variáveis de ambiente locais
+.env
+
+# Ignorar arquivos de upload
+public/uploads/
+
+# Ignorar logs
+*.log
+
+# Ignorar arquivos de lock
+package-lock.json 
