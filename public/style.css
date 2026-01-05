@@ -28,7 +28,7 @@ body::before {
   top: 0;
   width: 100%;
   z-index: 10;
-  background: #181818cc;
+  background: #181818;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -46,10 +46,7 @@ body::before {
 .logo-bg {
   display: flex;
   align-items: center;
-  background: rgba(24,24,24,0.95);
   padding: 16px 24px 16px 16px;
-  border-radius: 0 0 18px 0;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.10);
 }
 .logo-img {
   height: 64px;
@@ -119,14 +116,14 @@ nav a:hover, nav a.active {
 }
 .hero-title {
   font-family: 'Montserrat', Arial, sans-serif;
-  font-size: 3rem;
+  font-size: 4.5rem;
   font-weight: 900;
   color: #fff;
   margin-bottom: 24px;
   text-shadow: 0 2px 12px rgba(0,0,0,0.18);
 }
 .hero-subtitle {
-  font-size: 1.35rem;
+  font-size: 1.6rem;
   color: #fff;
   margin-bottom: 36px;
   font-weight: 400;
