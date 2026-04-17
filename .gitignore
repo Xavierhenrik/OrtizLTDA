@@ -17,7 +17,6 @@ public/uploads/
 *.log
 
 # Ignorar arquivos de lock
-package-lock.json 
+package-lock.json
 
-# Ignorar documentação
-/docs
+# Observação: /docs não é ignorado — documentação pode versionar em docs/

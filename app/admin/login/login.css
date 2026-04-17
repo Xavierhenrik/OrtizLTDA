@@ -1,4 +1,5 @@
 /* Login admin — mesmo vocabulário visual do painel /admin e modais */
+/* Cores fallback (hex) evitam cartão branco se variáveis :root atrasarem no bundle */
 
 main.admin-login-shell {
   flex: 1 1 auto;
@@ -30,7 +31,8 @@ main.admin-login-shell.admin-login-shell--visible {
 }
 
 .admin-login-card {
-  background: var(--color-surface-card-strong);
+  background-color: rgb(24 28 34 / 0.96);
+  background-color: var(--color-surface-card-strong);
   padding: 2rem 1.75rem;
   border-radius: var(--radius-panel-lg);
   box-shadow: var(--shadow-admin-modal);
@@ -45,6 +47,7 @@ main.admin-login-shell.admin-login-shell--visible {
 .admin-login-card .login-header h1 {
   margin: 0;
   font-size: clamp(1.35rem, 3.5vw, 1.65rem);
+  color: #ffb347;
   color: var(--color-heading-warm);
   font-family: var(--font-display), var(--font-body), Arial, sans-serif;
   font-weight: 700;
@@ -76,12 +79,22 @@ main.admin-login-shell.admin-login-shell--visible {
   border-radius: var(--radius-input);
   font-size: 1rem;
   box-sizing: border-box;
-  font-family: var(--font-body);
-  background: rgba(0, 0, 0, 0.35);
+  font-family: var(--font-body), system-ui, sans-serif;
+  background-color: rgba(0, 0, 0, 0.45);
+  color: #ffffff;
   color: var(--color-text);
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease;
+}
+
+/* Autofill do Chrome/Safari — mantém leitura escura */
+.admin-login-card input:-webkit-autofill,
+.admin-login-card input:-webkit-autofill:hover,
+.admin-login-card input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #fff;
+  box-shadow: 0 0 0 1000px rgba(18, 20, 26, 0.95) inset;
+  transition: background-color 5000s ease-out;
 }
 
 .admin-login-card input::placeholder {
