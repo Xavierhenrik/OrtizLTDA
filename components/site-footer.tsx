@@ -3,7 +3,7 @@ export function SiteFooter() {
     <footer>
       <div className="footer-content">
         <span>
-          &copy; 2024 Ortiz Ltda - Tradição e Precisão em Construção de Madeira a mais de 45 anos
+          &copy; {new Date().getFullYear()} Ortiz Ltda - Tradição e Precisão em Construção de Madeira a mais de 45 anos
         </span>
         <div className="footer-info">
           <span>

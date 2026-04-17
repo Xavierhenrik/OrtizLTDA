@@ -130,6 +130,7 @@ export default function AdminDashboardPage() {
   const [enteringImageUrls, setEnteringImageUrls] = useState<string[]>([]);
   const enterAnimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string } | null>(null);
 
   const loadProjects = useCallback(async () => {
     try {
@@ -152,6 +153,15 @@ export default function AdminDashboardPage() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!pendingDelete) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPendingDelete(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [pendingDelete]);
 
   useEffect(() => {
     let raf2 = 0;
@@ -307,12 +317,17 @@ export default function AdminDashboardPage() {
     }
   }
 
-  async function deleteProject(id: string) {
-    if (!confirm('Tem certeza que deseja excluir este projeto?')) return;
+  async function executeDeleteProject() {
+    if (!pendingDelete) return;
+    const id = pendingDelete.id;
     try {
       const response = await fetch(`/api/projects/${id}`, { method: 'DELETE' });
-      if (response.ok) loadProjects();
-      else alert('Erro ao excluir projeto');
+      if (response.ok) {
+        setPendingDelete(null);
+        loadProjects();
+      } else {
+        alert('Erro ao excluir projeto');
+      }
     } catch (e) {
       console.error(e);
       alert('Erro ao excluir projeto');
@@ -380,7 +395,7 @@ export default function AdminDashboardPage() {
                   <button
                     type="button"
                     className="btn-ortiz-danger"
-                    onClick={() => deleteProject(project._id)}
+                    onClick={() => setPendingDelete({ id: project._id, title: project.title })}
                   >
                     <i className="fas fa-trash" /> Excluir
                   </button>
@@ -390,6 +405,39 @@ export default function AdminDashboardPage() {
           ))}
         </div>
       </main>
+
+      {pendingDelete && (
+        <div
+          className="admin-confirm-backdrop"
+          role="presentation"
+          onClick={() => setPendingDelete(null)}
+        >
+          <div
+            className="admin-confirm-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="admin-confirm-delete-title"
+            aria-describedby="admin-confirm-delete-desc"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="admin-confirm-delete-title" className="admin-confirm-title">
+              Excluir projeto?
+            </h2>
+            <p id="admin-confirm-delete-desc" className="admin-confirm-text">
+              O projeto <strong>{pendingDelete.title}</strong> será removido permanentemente, incluindo as imagens
+              no armazenamento. Esta ação não pode ser desfeita.
+            </p>
+            <div className="admin-confirm-actions">
+              <button type="button" className="btn-ortiz-outline btn-modal-cancel" onClick={() => setPendingDelete(null)}>
+                Cancelar
+              </button>
+              <button type="button" className="btn-ortiz-danger admin-confirm-delete-btn" onClick={executeDeleteProject}>
+                <i className="fas fa-trash" /> Excluir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div
         className={`admin-modal${modalOpen ? ' admin-modal--open' : ''}`}

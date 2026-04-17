@@ -47,6 +47,8 @@ body::before {
 .logo-bg {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  row-gap: 6px;
   padding: 16px 24px 16px 16px;
 }
 .logo-img {
@@ -224,6 +226,9 @@ nav a:focus-visible {
     flex-direction: column;
     padding: 0 8px;
     min-height: 70px;
+  }
+  .logo-bg {
+    justify-content: center;
   }
   nav ul {
     gap: 18px;
@@ -429,4 +434,64 @@ footer {
 .btn-ortiz-danger:hover {
   background: var(--color-danger-hover);
   transform: scale(1.03);
+}
+
+/* ——— Responsividade: mobile / tablet (site público) ——— */
+/* Fundo fixo em iOS/Android costuma causar cortes e jank; em telas estreitas usa scroll. */
+@media (max-width: 900px) {
+  body {
+    background-attachment: scroll;
+  }
+  .hero {
+    background-attachment: scroll;
+    min-height: min(75vh, 640px);
+  }
+}
+
+/* Título do hero: escala suave entre tablet e mobile (evita salto só em 900px) */
+@media (max-width: 900px) {
+  .hero-title {
+    font-size: clamp(1.65rem, 5.5vw + 0.5rem, 2rem);
+  }
+  .hero-subtitle {
+    font-size: clamp(1rem, 2.5vw + 0.35rem, 1.35rem);
+  }
+}
+
+@media (max-width: 900px) {
+  .slogan {
+    text-align: center;
+    line-height: 1.35;
+    max-width: 100%;
+    padding: 0 4px;
+  }
+}
+
+/* Toque: área mínima confortável nos links do menu */
+@media (max-width: 900px) {
+  nav a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-sticky {
+    padding-left: max(8px, env(safe-area-inset-left, 0px));
+    padding-right: max(8px, env(safe-area-inset-right, 0px));
+    padding-bottom: 10px;
+  }
+  .botoes-hero {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    padding: 0 4px;
+  }
+  .botoes-hero .btn-ortiz-outline,
+  .botoes-hero .btn-ortiz-primary {
+    justify-content: center;
+    min-height: 48px;
+  }
 }

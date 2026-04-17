@@ -50,7 +50,7 @@ main.projetos-shell.projetos-shell--visible {
 }
 
 .projetos-skeleton-card {
-  width: 320px;
+  width: min(100%, 320px);
   height: 360px;
   border-radius: var(--radius-card);
   background: linear-gradient(
@@ -77,7 +77,8 @@ main.projetos-shell.projetos-shell--visible {
   color: var(--color-text);
   border-radius: var(--radius-card);
   overflow: hidden;
-  width: 320px;
+  width: min(100%, 320px);
+  flex: 0 1 320px;
   box-shadow: var(--shadow-card);
   transition: transform 0.25s ease;
   display: flex;
@@ -195,8 +196,8 @@ main.projetos-shell.projetos-shell--visible {
 
 .projetos-modal .close-btn {
   position: absolute;
-  top: 20px;
-  right: 35px;
+  top: max(12px, env(safe-area-inset-top, 0px));
+  right: max(12px, env(safe-area-inset-right, 0px));
   z-index: 2;
   color: var(--color-text-soft);
   font-size: 40px;
@@ -221,6 +222,8 @@ main.projetos-shell.projetos-shell--visible {
   position: absolute;
   top: 50%;
   width: auto;
+  min-width: 48px;
+  min-height: 48px;
   padding: 16px;
   margin-top: -50px;
   color: var(--color-text);

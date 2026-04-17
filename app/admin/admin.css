@@ -1,5 +1,43 @@
 /* Painel admin — mesmo padrão visual do site (fundo hero + cartões escuros) */
 
+/* Só tablets/celular: aviso de que o painel é pensado para desktop */
+.admin-mobile-notice {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .admin-mobile-notice {
+    display: block;
+    position: relative;
+    z-index: 20;
+    margin: 0;
+    padding: 0.65rem 1rem;
+    padding-left: max(1rem, env(safe-area-inset-left, 0px));
+    padding-right: max(1rem, env(safe-area-inset-right, 0px));
+    background: rgba(255, 152, 0, 0.12);
+    border-bottom: 1px solid rgba(255, 152, 0, 0.35);
+    color: var(--color-text-soft);
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+
+  .admin-mobile-notice__text {
+    margin: 0;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .admin-mobile-notice__icon {
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+    color: var(--color-brand);
+  }
+}
+
 main.admin-shell {
   flex: 1 0 auto;
   position: relative;
@@ -95,6 +133,17 @@ main.admin-shell.admin-shell--visible {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+@media (max-width: 520px) {
+  main.admin-shell {
+    padding-left: max(12px, env(safe-area-inset-left, 0px));
+    padding-right: max(12px, env(safe-area-inset-right, 0px));
+  }
+
+  .projects-grid-admin {
+    grid-template-columns: 1fr;
+  }
 }
 
 .admin-modal {
@@ -568,4 +617,100 @@ main.admin-shell.admin-shell--visible {
 .admin-modal-inner .modal-footer .btn-modal-cancel:hover {
   border-color: var(--color-brand);
   color: var(--color-brand);
+}
+
+/* Confirmação de exclusão (substitui window.confirm) */
+.admin-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: var(--color-overlay-admin);
+  backdrop-filter: blur(3px);
+  overflow-x: hidden;
+  animation: admin-confirm-fade-in 0.2s ease;
+}
+
+@keyframes admin-confirm-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.admin-confirm-dialog {
+  width: 100%;
+  max-width: 420px;
+  background: var(--color-surface-card-strong);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-panel-lg);
+  padding: 1.5rem 1.75rem;
+  box-shadow: var(--shadow-admin-modal);
+  box-sizing: border-box;
+}
+
+.admin-confirm-title {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.25rem;
+  color: var(--color-heading-warm);
+  font-family: var(--font-display), var(--font-body), Arial, sans-serif;
+  font-weight: 700;
+}
+
+.admin-confirm-text {
+  margin: 0 0 1.35rem 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.admin-confirm-text strong {
+  color: var(--color-text-soft);
+  font-weight: 600;
+}
+
+.admin-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.admin-confirm-actions .btn-modal-cancel {
+  min-width: 120px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  font-weight: 600;
+  border-color: rgba(255, 152, 0, 0.55);
+  color: var(--color-accent-gold);
+}
+
+.admin-confirm-actions .btn-modal-cancel:hover {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+}
+
+.admin-confirm-delete-btn {
+  min-width: 120px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-confirm-backdrop {
+    animation: none;
+  }
 }

@@ -1,4 +1,4 @@
-/* Login admin — alinhado ao painel /admin (cores e card) */
+/* Login admin — mesmo vocabulário visual do painel /admin e modais */
 
 main.admin-login-shell {
   flex: 1 1 auto;
@@ -11,7 +11,7 @@ main.admin-login-shell {
   box-sizing: border-box;
   position: relative;
   z-index: 1;
-  min-height: 50vh;
+  min-height: min(70vh, 640px);
   opacity: 0;
   transform: translateY(14px);
   transition:
@@ -26,35 +26,35 @@ main.admin-login-shell.admin-login-shell--visible {
 
 .admin-login-card-wrap {
   width: 100%;
-  max-width: 420px;
+  max-width: min(420px, calc(100vw - 2rem));
 }
 
 .admin-login-card {
-  background: rgba(255, 255, 255, 0.98);
-  padding: 2rem;
-  border-radius: var(--radius-panel);
-  box-shadow: var(--shadow-login-card);
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: var(--color-surface-card-strong);
+  padding: 2rem 1.75rem;
+  border-radius: var(--radius-panel-lg);
+  box-shadow: var(--shadow-admin-modal);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .admin-login-card .login-header {
   text-align: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.6rem;
 }
 
 .admin-login-card .login-header h1 {
   margin: 0;
   font-size: clamp(1.35rem, 3.5vw, 1.65rem);
-  color: var(--color-brand);
+  color: var(--color-heading-warm);
   font-family: var(--font-display), var(--font-body), Arial, sans-serif;
   font-weight: 700;
 }
 
 .admin-login-card .login-sub {
-  margin: 0.5rem 0 0;
-  font-size: 0.95rem;
-  color: var(--color-text-subtle);
-  line-height: 1.4;
+  margin: 0.55rem 0 0;
+  font-size: 0.92rem;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.45;
 }
 
 .admin-login-card .form-group {
@@ -64,31 +64,56 @@ main.admin-login-shell.admin-login-shell--visible {
 .admin-login-card label {
   display: block;
   margin-bottom: 0.45rem;
-  color: var(--color-text-label);
-  font-weight: 500;
-  font-size: 0.95rem;
+  color: var(--color-accent-gold);
+  font-weight: 600;
+  font-size: 0.92rem;
 }
 
 .admin-login-card input {
   width: 100%;
   padding: 0.75rem 0.85rem;
-  border: 1px solid var(--color-border-light);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: var(--radius-input);
   font-size: 1rem;
   box-sizing: border-box;
   font-family: var(--font-body);
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--color-text);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.admin-login-card input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.admin-login-card input:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.admin-login-card input:focus {
+  outline: none;
+  border-color: rgba(255, 152, 0, 0.55);
+  box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.15);
 }
 
 .admin-login-card .btn-login-submit {
   width: 100%;
-  margin-top: 0.35rem;
+  margin-top: 0.5rem;
   padding-top: 0.85rem;
   padding-bottom: 0.85rem;
+  font-weight: 700;
 }
 
 .admin-login-card .error-message {
-  color: var(--color-error-text);
+  color: #ffcdd2;
+  background: rgba(198, 40, 40, 0.2);
+  border: 1px solid rgba(244, 67, 54, 0.35);
+  border-radius: var(--radius-input);
   margin-top: 1rem;
+  padding: 0.65rem 0.75rem;
   text-align: center;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
 }
