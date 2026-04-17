@@ -1,11 +1,47 @@
 'use client';
 
+import { AdminLoginModal } from '@/components/admin-login-modal';
+import { createBrowserSupabase } from '@/lib/supabase/browser';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useCallback, useState } from 'react';
 
 /** Cabeçalho global (Início / Projetos / Admin) — alinhado a `public/style.css`. */
 export function SiteHeader() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [adminLoginOpen, setAdminLoginOpen] = useState(false);
+
+  const onAdminNav = useCallback(async () => {
+    if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
+      router.push('/admin');
+      return;
+    }
+    if (pathname === '/admin/login') {
+      return;
+    }
+
+    try {
+      const supabase = createBrowserSupabase();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', session.user.id)
+          .maybeSingle();
+        if (profile?.is_admin) {
+          router.push('/admin');
+          return;
+        }
+      }
+    } catch {
+      /* abre o modal */
+    }
+    setAdminLoginOpen(true);
+  }, [pathname, router]);
 
   return (
     <header className="header-sticky">
@@ -36,12 +72,19 @@ export function SiteHeader() {
             </Link>
           </li>
           <li>
-            <Link href="/admin" className={pathname.startsWith('/admin') ? 'active' : undefined}>
-              Admin
-            </Link>
+            {pathname === '/admin/login' ? (
+              <span className="active" aria-current="page">
+                Admin
+              </span>
+            ) : (
+              <button type="button" className={pathname.startsWith('/admin') ? 'active' : undefined} onClick={onAdminNav}>
+                Admin
+              </button>
+            )}
           </li>
         </ul>
       </nav>
+      <AdminLoginModal open={adminLoginOpen} onClose={() => setAdminLoginOpen(false)} />
     </header>
   );
 }

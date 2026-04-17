@@ -21,8 +21,9 @@
   --color-text-label: #444444;
   --color-text-subtle: #555555;
 
-  --color-overlay-body: rgba(0, 0, 0, 0.45);
-  --color-overlay-hero: rgba(0, 0, 0, 0.4);
+  /* Com uma só camada de foto no body, estes valores aproximam o contraste do layout antigo (foto + overlay). */
+  --color-overlay-body: rgba(0, 0, 0, 0.5);
+  --color-overlay-hero: rgba(0, 0, 0, 0.38);
   --color-overlay-modal-dark: rgba(0, 0, 0, 0.9);
   --color-overlay-admin: rgba(0, 0, 0, 0.65);
 

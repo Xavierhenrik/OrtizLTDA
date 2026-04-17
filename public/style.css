@@ -4,22 +4,29 @@ body {
 }
 body {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   margin: 0;
   font-family: var(--font-body);
-  background: url('hero-real.jpg') center center/cover no-repeat fixed;
+  /* Uma única camada de imagem (evita “costura” com o .hero que antes repetia o mesmo asset) */
+  background-color: #161616;
+  background-image: url('hero-real.jpg');
+  background-position: center top;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   color: var(--color-text);
   position: relative;
   overflow-x: hidden;
 }
+/* Camada única de escurecimento sobre o bg do body; cobre viewport inteira (incl. dvh / barras). */
 body::before {
   content: '';
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
+  inset: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--color-overlay-body);
   z-index: 0;
   pointer-events: none;
@@ -96,6 +103,36 @@ nav a:focus-visible {
   outline-offset: 4px;
   border-radius: 4px;
 }
+nav button {
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: 1.2rem;
+  font-family: var(--font-body);
+  font-weight: 600;
+  transition: color 0.2s;
+  padding: 8px 0;
+  white-space: nowrap;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+nav button:hover,
+nav button.active {
+  color: var(--color-accent-gold);
+}
+nav button:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+nav span.active {
+  color: var(--color-accent-gold);
+  font-size: 1.2rem;
+  font-family: var(--font-body);
+  font-weight: 600;
+  padding: 8px 0;
+  white-space: nowrap;
+}
 .search-icon i {
   font-size: 1.2rem;
 }
@@ -105,7 +142,8 @@ nav a:focus-visible {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: url('hero-real.jpg') center center/cover no-repeat fixed;
+  /* Fundo vem só do body — evita duplicar textura e falhas em mobile */
+  background: transparent;
 }
 .hero-overlay {
   position: absolute;
@@ -227,7 +265,7 @@ nav a:focus-visible {
     flex-direction: column;
     align-items: stretch;
     justify-content: flex-start;
-    padding: 10px 12px 0;
+    padding: 6px 10px 0;
     min-height: unset;
     gap: 0;
   }
@@ -239,30 +277,35 @@ nav a:focus-visible {
 
   .logo-bg {
     justify-content: center;
-    padding: 8px 8px 10px;
+    padding: 4px 6px 6px;
     border-radius: 0;
   }
 
   .logo-img {
-    height: 44px;
+    height: 36px;
     width: auto;
     aspect-ratio: 339 / 171;
-    margin-right: 8px;
+    margin-right: 6px;
   }
 
+  /* Slogan visível, compacto (não some em telas pequenas) */
   .slogan {
-    font-size: 0.82rem;
+    display: block;
+    font-size: clamp(0.62rem, 2.8vw, 0.78rem);
     text-align: center;
-    line-height: 1.3;
+    line-height: 1.25;
     max-width: 100%;
+    margin-top: 2px;
+    letter-spacing: 0.02em;
+    padding: 0 4px;
   }
 
-  /* Faixa de navegação única, largura total — não “flutua” sobre o hero */
+  /* Faixa de navegação fina */
   .header-sticky nav {
     width: 100%;
     margin: 0;
-    padding: 10px 4px 12px;
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 4px 2px 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     background: var(--color-surface-header);
   }
 
@@ -271,7 +314,7 @@ nav a:focus-visible {
     flex-wrap: nowrap;
     justify-content: stretch;
     align-items: stretch;
-    gap: 2px;
+    gap: 0;
     width: 100%;
     max-width: 100%;
     margin: 0;
@@ -288,13 +331,13 @@ nav a:focus-visible {
   }
 
   .header-sticky nav a {
-    font-size: 0.92rem;
+    font-size: 0.82rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     text-align: center;
-    min-height: 44px;
-    padding: 10px 4px;
+    min-height: 36px;
+    padding: 4px 2px;
     width: 100%;
     box-sizing: border-box;
   }
@@ -311,22 +354,16 @@ nav a:focus-visible {
   }
 }
 
-/* Telas estreitas: slogan longo some para o menu ficar numa linha só com o logo */
-@media (max-width: 680px) {
-  .header-sticky .slogan {
-    display: none;
-  }
-
-  .logo-bg {
-    padding-bottom: 6px;
-  }
-}
 main {
   flex: 1 0 auto;
+  position: relative;
+  z-index: 1;
 }
 footer {
   flex-shrink: 0;
   margin-top: 48px;
+  position: relative;
+  z-index: 1;
 }
 
 /* Botões — sistema único Ortiz */
@@ -497,12 +534,14 @@ footer {
 
 /* ——— Responsividade: mobile / tablet (site público) ——— */
 /* Fundo fixo em iOS/Android costuma causar cortes e jank; em telas estreitas usa scroll. */
+/* iOS/Android: fixed no body costuma gerar artefatos; scroll mantém uma faixa contínua */
 @media (max-width: 900px) {
   body {
     background-attachment: scroll;
+    background-position: center center;
   }
+
   .hero {
-    background-attachment: scroll;
     min-height: min(75vh, 640px);
   }
 }
