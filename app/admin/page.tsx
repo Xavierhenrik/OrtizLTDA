@@ -1,6 +1,7 @@
 'use client';
 
 import { SiteHeader } from '@/components/site-header';
+import { useFocusTrap } from '@/lib/use-focus-trap';
 import Image from 'next/image';
 import {
   ChangeEvent,
@@ -8,6 +9,7 @@ import {
   FormEvent,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
@@ -47,7 +49,7 @@ function PendingImagePreview({ file, onRemove }: { file: File; onRemove: () => v
           onClick={onRemove}
           aria-label={`Remover ${file.name}`}
         >
-          <i className="fas fa-times" />
+          <i className="fas fa-times" aria-hidden />
         </button>
       </div>
       <span className="admin-pending-name" title={file.name}>
@@ -85,7 +87,7 @@ function ExistingImageTile({
           unoptimized
         />
         <button type="button" className="admin-gallery-remove" onClick={onRemove} aria-label="Remover imagem">
-          <i className="fas fa-times" />
+          <i className="fas fa-times" aria-hidden />
         </button>
       </div>
       <div className="admin-gallery-order">
@@ -96,7 +98,7 @@ function ExistingImageTile({
           onClick={() => onReorder(-1)}
           aria-label="Mover antes na ordem"
         >
-          <i className="fas fa-arrow-left" />
+          <i className="fas fa-arrow-left" aria-hidden />
         </button>
         <span className="admin-gallery-order-label">
           {index + 1}/{total}
@@ -108,7 +110,7 @@ function ExistingImageTile({
           onClick={() => onReorder(1)}
           aria-label="Mover depois na ordem"
         >
-          <i className="fas fa-arrow-right" />
+          <i className="fas fa-arrow-right" aria-hidden />
         </button>
       </div>
     </li>
@@ -131,6 +133,52 @@ export default function AdminDashboardPage() {
   const enterAnimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string } | null>(null);
+  const [saveError, setSaveError] = useState('');
+  const [deleteError, setDeleteError] = useState('');
+  const projectModalRef = useRef<HTMLDivElement>(null);
+  const confirmDialogRef = useRef<HTMLDivElement>(null);
+  const confirmCancelRef = useRef<HTMLButtonElement>(null);
+  const previousFocusProjectRef = useRef<HTMLElement | null>(null);
+  const previousFocusConfirmRef = useRef<HTMLElement | null>(null);
+
+  const closeModal = useCallback(() => {
+    if (enterAnimTimerRef.current) {
+      clearTimeout(enterAnimTimerRef.current);
+      enterAnimTimerRef.current = null;
+    }
+    setEnteringImageUrls([]);
+    setModalOpen(false);
+    setCurrentProjectId(null);
+    setPendingImages([]);
+    setKeptImageUrls([]);
+    setSaveError('');
+  }, []);
+
+  const openModal = useCallback((project?: Project) => {
+    setSaveError('');
+    if (project) {
+      setModalTitle('Editar Projeto');
+      setCurrentProjectId(project._id);
+      setTitle(project.title);
+      setDescription(project.description);
+      setCategory(project.category);
+      setKeptImageUrls(project.imageUrls?.length ? [...project.imageUrls] : []);
+    } else {
+      setModalTitle('Novo Projeto');
+      setCurrentProjectId(null);
+      setTitle('');
+      setDescription('');
+      setCategory('residencial');
+      setKeptImageUrls([]);
+    }
+    setPendingImages([]);
+    setEnteringImageUrls([]);
+    if (enterAnimTimerRef.current) {
+      clearTimeout(enterAnimTimerRef.current);
+      enterAnimTimerRef.current = null;
+    }
+    setModalOpen(true);
+  }, []);
 
   const loadProjects = useCallback(async () => {
     try {
@@ -157,7 +205,10 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     if (!pendingDelete) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setPendingDelete(null);
+      if (e.key === 'Escape') {
+        setDeleteError('');
+        setPendingDelete(null);
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -174,42 +225,55 @@ export default function AdminDashboardPage() {
     };
   }, []);
 
-  function openModal(project?: Project) {
-    if (project) {
-      setModalTitle('Editar Projeto');
-      setCurrentProjectId(project._id);
-      setTitle(project.title);
-      setDescription(project.description);
-      setCategory(project.category);
-      setKeptImageUrls(project.imageUrls?.length ? [...project.imageUrls] : []);
-    } else {
-      setModalTitle('Novo Projeto');
-      setCurrentProjectId(null);
-      setTitle('');
-      setDescription('');
-      setCategory('residencial');
-      setKeptImageUrls([]);
+  useLayoutEffect(() => {
+    if (modalOpen) {
+      previousFocusProjectRef.current = document.activeElement as HTMLElement | null;
+      return;
     }
-    setPendingImages([]);
-    setEnteringImageUrls([]);
-    if (enterAnimTimerRef.current) {
-      clearTimeout(enterAnimTimerRef.current);
-      enterAnimTimerRef.current = null;
+    const prev = previousFocusProjectRef.current;
+    previousFocusProjectRef.current = null;
+    if (prev && document.body.contains(prev) && typeof prev.focus === 'function') {
+      prev.focus();
     }
-    setModalOpen(true);
-  }
+  }, [modalOpen]);
 
-  function closeModal() {
-    if (enterAnimTimerRef.current) {
-      clearTimeout(enterAnimTimerRef.current);
-      enterAnimTimerRef.current = null;
+  useLayoutEffect(() => {
+    if (pendingDelete) {
+      previousFocusConfirmRef.current = document.activeElement as HTMLElement | null;
+      return;
     }
-    setEnteringImageUrls([]);
-    setModalOpen(false);
-    setCurrentProjectId(null);
-    setPendingImages([]);
-    setKeptImageUrls([]);
-  }
+    const prev = previousFocusConfirmRef.current;
+    previousFocusConfirmRef.current = null;
+    if (prev && document.body.contains(prev) && typeof prev.focus === 'function') {
+      prev.focus();
+    }
+  }, [pendingDelete]);
+
+  useFocusTrap(projectModalRef, modalOpen);
+  useFocusTrap(confirmDialogRef, !!pendingDelete);
+
+  useEffect(() => {
+    if (!modalOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeModal();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [modalOpen, closeModal]);
+
+  useEffect(() => {
+    if (!modalOpen) return;
+    const t = window.setTimeout(() => {
+      document.getElementById('title')?.focus();
+    }, 0);
+    return () => window.clearTimeout(t);
+  }, [modalOpen]);
+
+  useEffect(() => {
+    if (!pendingDelete) return;
+    const t = window.setTimeout(() => confirmCancelRef.current?.focus(), 0);
+    return () => window.clearTimeout(t);
+  }, [pendingDelete]);
 
   function pushPendingFiles(fileList: FileList | File[]) {
     const files = Array.from(fileList).filter((f) => f.type.startsWith('image/'));
@@ -308,12 +372,13 @@ export default function AdminDashboardPage() {
         }
 
         loadProjects();
+        setSaveError('');
       } else {
-        alert('Erro ao salvar projeto');
+        setSaveError('Erro ao salvar projeto. Tente novamente.');
       }
     } catch (err) {
       console.error(err);
-      alert('Erro ao salvar projeto');
+      setSaveError('Erro ao salvar projeto. Tente novamente.');
     }
   }
 
@@ -324,13 +389,14 @@ export default function AdminDashboardPage() {
       const response = await fetch(`/api/projects/${id}`, { method: 'DELETE' });
       if (response.ok) {
         setPendingDelete(null);
+        setDeleteError('');
         loadProjects();
       } else {
-        alert('Erro ao excluir projeto');
+        setDeleteError('Erro ao excluir projeto. Tente novamente.');
       }
     } catch (e) {
       console.error(e);
-      alert('Erro ao excluir projeto');
+      setDeleteError('Erro ao excluir projeto. Tente novamente.');
     }
   }
 
@@ -342,7 +408,11 @@ export default function AdminDashboardPage() {
     <>
       <SiteHeader />
 
-      <main className={`admin-shell${shellVisible ? ' admin-shell--visible' : ''}`}>
+      <main
+        id="conteudo-principal"
+        tabIndex={-1}
+        className={`admin-shell${shellVisible ? ' admin-shell--visible' : ''}`}
+      >
         <div className="admin-toolbar">
           <h1>Painel administrativo</h1>
           <div className="admin-toolbar-actions">
@@ -353,16 +423,26 @@ export default function AdminDashboardPage() {
                 window.location.href = '/';
               }}
             >
-              <i className="fas fa-arrow-left" /> Voltar ao site
+              <i className="fas fa-arrow-left" aria-hidden /> Voltar ao site
             </button>
             <button type="button" className="btn-ortiz-outline" onClick={logout}>
-              <i className="fas fa-sign-out-alt" /> Sair
+              <i className="fas fa-sign-out-alt" aria-hidden /> Sair
             </button>
             <button type="button" className="btn-ortiz-primary btn-ortiz-static" onClick={() => openModal()}>
-              <i className="fas fa-plus" /> Novo projeto
+              <i className="fas fa-plus" aria-hidden /> Novo projeto
             </button>
           </div>
         </div>
+        {saveError ? (
+          <p className="admin-error-banner" role="alert">
+            {saveError}
+          </p>
+        ) : null}
+        {deleteError ? (
+          <p className="admin-error-banner" role="alert">
+            {deleteError}
+          </p>
+        ) : null}
 
         <div className="projects-grid-admin">
           {projects.map((project) => (
@@ -390,14 +470,17 @@ export default function AdminDashboardPage() {
                     className="btn-ortiz-success"
                     onClick={() => openModal(project)}
                   >
-                    <i className="fas fa-edit" /> Editar
+                    <i className="fas fa-edit" aria-hidden /> Editar
                   </button>
                   <button
                     type="button"
                     className="btn-ortiz-danger"
-                    onClick={() => setPendingDelete({ id: project._id, title: project.title })}
+                    onClick={() => {
+                      setDeleteError('');
+                      setPendingDelete({ id: project._id, title: project.title });
+                    }}
                   >
-                    <i className="fas fa-trash" /> Excluir
+                    <i className="fas fa-trash" aria-hidden /> Excluir
                   </button>
                 </div>
               </div>
@@ -410,9 +493,13 @@ export default function AdminDashboardPage() {
         <div
           className="admin-confirm-backdrop"
           role="presentation"
-          onClick={() => setPendingDelete(null)}
+          onClick={() => {
+            setDeleteError('');
+            setPendingDelete(null);
+          }}
         >
           <div
+            ref={confirmDialogRef}
             className="admin-confirm-dialog"
             role="alertdialog"
             aria-modal="true"
@@ -428,11 +515,19 @@ export default function AdminDashboardPage() {
               no armazenamento. Esta ação não pode ser desfeita.
             </p>
             <div className="admin-confirm-actions">
-              <button type="button" className="btn-ortiz-outline btn-modal-cancel" onClick={() => setPendingDelete(null)}>
+              <button
+                ref={confirmCancelRef}
+                type="button"
+                className="btn-ortiz-outline btn-modal-cancel"
+                onClick={() => {
+                  setDeleteError('');
+                  setPendingDelete(null);
+                }}
+              >
                 Cancelar
               </button>
               <button type="button" className="btn-ortiz-danger admin-confirm-delete-btn" onClick={executeDeleteProject}>
-                <i className="fas fa-trash" /> Excluir
+                <i className="fas fa-trash" aria-hidden /> Excluir
               </button>
             </div>
           </div>
@@ -440,14 +535,16 @@ export default function AdminDashboardPage() {
       )}
 
       <div
+        ref={projectModalRef}
         className={`admin-modal${modalOpen ? ' admin-modal--open' : ''}`}
         role="dialog"
         aria-modal="true"
+        aria-labelledby="admin-project-modal-title"
         aria-hidden={!modalOpen}
       >
         <div className="admin-modal-inner">
           <div className="modal-header">
-            <h2>{modalTitle}</h2>
+            <h2 id="admin-project-modal-title">{modalTitle}</h2>
             <button type="button" className="close-btn" onClick={closeModal} aria-label="Fechar">
               &times;
             </button>
@@ -523,7 +620,7 @@ export default function AdminDashboardPage() {
                       onChange={onImageFilesChange}
                     />
                     <div className="admin-dropzone-icon" aria-hidden>
-                      <i className="fas fa-cloud-upload-alt" />
+                      <i className="fas fa-cloud-upload-alt" aria-hidden />
                     </div>
                     <p className="admin-dropzone-title">Adicionar imagens</p>
                     <p className="admin-dropzone-text">
@@ -534,7 +631,7 @@ export default function AdminDashboardPage() {
                       className="btn-ortiz-outline admin-dropzone-btn"
                       onClick={() => fileInputRef.current?.click()}
                     >
-                      <i className="fas fa-folder-open" /> Escolher arquivos
+                      <i className="fas fa-folder-open" aria-hidden /> Escolher arquivos
                     </button>
                   </div>
 
@@ -558,7 +655,7 @@ export default function AdminDashboardPage() {
                 Cancelar
               </button>
               <button type="submit" className="btn-ortiz-primary btn-ortiz-static btn-modal-save">
-                <i className="fas fa-save" /> Salvar
+                <i className="fas fa-save" aria-hidden /> Salvar
               </button>
             </div>
           </form>

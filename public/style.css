@@ -9,27 +9,18 @@ body {
   flex-direction: column;
   margin: 0;
   font-family: var(--font-body);
-  /* Uma única camada de imagem (evita “costura” com o .hero que antes repetia o mesmo asset) */
+  /* Padrão: foto + scrim na MESMA declaração background-image (evita “furo” entre seções). */
   background-color: #161616;
-  background-image: url('hero-real.jpg');
-  background-position: center top;
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
+  background-image:
+    linear-gradient(var(--color-site-photo-scrim), var(--color-site-photo-scrim)),
+    url('hero-real.jpg');
+  background-position: center top, center top;
+  background-size: cover, cover;
+  background-repeat: no-repeat, no-repeat;
+  background-attachment: fixed, fixed;
   color: var(--color-text);
   position: relative;
   overflow-x: hidden;
-}
-/* Camada única de escurecimento sobre o bg do body; cobre viewport inteira (incl. dvh / barras). */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  min-height: 100vh;
-  min-height: 100dvh;
-  background: var(--color-overlay-body);
-  z-index: 0;
-  pointer-events: none;
 }
 .header-sticky {
   position: sticky;
@@ -42,7 +33,7 @@ body::before {
   justify-content: space-between;
   align-items: center;
   padding: 0 32px;
-  min-height: 90px;
+  min-height: 104px;
   box-sizing: border-box;
   max-width: 100%;
   box-shadow: var(--shadow-header);
@@ -57,14 +48,52 @@ body::before {
   align-items: center;
   flex-wrap: wrap;
   row-gap: 6px;
-  padding: 16px 24px 16px 16px;
+  column-gap: 14px;
+  padding: 0;
+}
+/*
+ * Logo no header (pattern):
+ * - Sem segundo “surface” no link/img — só o fundo do .header-sticky (evita halo/cor diferente).
+ * - .logo-mark só colapsa baseline/gap sob a imagem (inline replaced element).
+ * - Foco: ring via box-shadow (não outline com offset que parece padding).
+ */
+.logo-link {
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+  text-decoration: none;
+  color: inherit;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  line-height: 0;
+  vertical-align: middle;
+}
+.logo-link:focus {
+  outline: none;
+}
+.logo-link:focus-visible {
+  outline: none;
+  border-radius: 4px;
+  box-shadow: 0 0 0 2px var(--color-brand);
+}
+.logo-mark {
+  display: block;
+  line-height: 0;
+  font-size: 0;
 }
 .logo-img {
   display: block;
-  height: 64px;
+  height: 78px;
   width: auto;
-  aspect-ratio: 339 / 171;
-  margin-right: 18px;
+  max-width: min(420px, 56vw);
+  object-fit: contain;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  /* Fundo preto no PNG “some” sobre o header escuro; se ficar estranho, trocar por lighten */
+  mix-blend-mode: screen;
 }
 .slogan {
   font-size: 1.05rem;
@@ -139,24 +168,15 @@ nav span.active {
 .hero {
   position: relative;
   min-height: 80vh;
+  min-height: 80dvh;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Fundo vem só do body — evita duplicar textura e falhas em mobile */
   background: transparent;
-}
-.hero-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: var(--color-overlay-hero);
-  z-index: 1;
 }
 .hero-content {
   position: relative;
-  z-index: 2;
+  z-index: 1;
   text-align: center;
   max-width: 800px;
   margin: 0 auto;
@@ -193,7 +213,10 @@ nav span.active {
   flex-wrap: wrap;
 }
 .footer-content {
-  background: var(--color-surface-footer);
+  /* Mesma superfície do cabeçalho — barra inferior contínua e legível sobre a foto. */
+  background: var(--color-surface-header);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.08);
   color: var(--color-text);
   padding: 32px 16px 16px 16px;
   text-align: center;
@@ -277,15 +300,16 @@ nav span.active {
 
   .logo-bg {
     justify-content: center;
-    padding: 4px 6px 6px;
+    padding: 0;
     border-radius: 0;
   }
 
   .logo-img {
-    height: 36px;
+    height: 44px;
     width: auto;
-    aspect-ratio: 339 / 171;
-    margin-right: 6px;
+    max-width: min(320px, 92vw);
+    object-fit: contain;
+    margin-right: 0;
   }
 
   /* Slogan visível, compacto (não some em telas pequenas) */
@@ -537,12 +561,13 @@ footer {
 /* iOS/Android: fixed no body costuma gerar artefatos; scroll mantém uma faixa contínua */
 @media (max-width: 900px) {
   body {
-    background-attachment: scroll;
-    background-position: center center;
+    background-attachment: scroll, scroll;
+    background-position: center center, center center;
   }
 
   .hero {
     min-height: min(75vh, 640px);
+    min-height: min(75dvh, 640px);
   }
 }
 

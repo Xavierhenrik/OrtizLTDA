@@ -1,5 +1,7 @@
 /* Design tokens + scrollbar (site principal também usa /style.css em public/) */
 :root {
+  --a11y-font-scale: 1;
+
   --color-brand: #ff9800;
   --color-brand-hover: #e07c00;
   --color-accent-gold: #e0b96a;
@@ -7,7 +9,6 @@
   --color-whatsapp: #25d366;
 
   --color-surface-header: #181818;
-  --color-surface-footer: #181818cc;
   --color-surface-card: rgba(24, 28, 34, 0.85);
   --color-surface-card-strong: rgba(24, 28, 34, 0.9);
   --color-surface-outline: #23272f;
@@ -21,9 +22,8 @@
   --color-text-label: #444444;
   --color-text-subtle: #555555;
 
-  /* Com uma só camada de foto no body, estes valores aproximam o contraste do layout antigo (foto + overlay). */
-  --color-overlay-body: rgba(0, 0, 0, 0.5);
-  --color-overlay-hero: rgba(0, 0, 0, 0.38);
+  /* Um único “scrim” sobre a foto do body (mesma camada que a imagem → sem costura entre hero/rodapé). */
+  --color-site-photo-scrim: rgba(0, 0, 0, 0.56);
   --color-overlay-modal-dark: rgba(0, 0, 0, 0.9);
   --color-overlay-admin: rgba(0, 0, 0, 0.65);
 
@@ -69,6 +69,7 @@ html {
   overflow-x: hidden;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  font-size: calc(100% * var(--a11y-font-scale, 1));
 }
 
 html,
@@ -79,4 +80,249 @@ body {
 body {
   padding-left: env(safe-area-inset-left, 0);
   padding-right: env(safe-area-inset-right, 0);
+}
+
+/* Skip link: fora da tela até receber foco por teclado */
+.skip-to-content {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 10000;
+  padding: 0.75rem 1rem;
+  margin: 0;
+  background: var(--color-surface-header);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 1rem;
+  text-decoration: none;
+  border: 2px solid var(--color-brand);
+  border-radius: var(--radius-button);
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.skip-to-content:focus,
+.skip-to-content:focus-visible {
+  clip: auto;
+  clip-path: none;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  margin: 8px;
+}
+
+/* Foco visível por teclado (complementa regras em /public/style.css) */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+a:focus:not(:focus-visible),
+button:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible),
+select:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Barra flutuante de acessibilidade (canto inferior esquerdo — evita sobrepor VLibras) */
+.a11y-toolbar {
+  position: fixed;
+  left: max(12px, env(safe-area-inset-left, 0px));
+  bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  z-index: 9990;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  font-family: var(--font-body);
+}
+
+.a11y-toolbar__fab {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--color-brand);
+  background: var(--color-surface-header);
+  color: var(--color-accent-gold);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  box-shadow: var(--shadow-card);
+}
+
+.a11y-toolbar__fab:focus-visible {
+  outline: 3px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+.a11y-toolbar__panel {
+  min-width: 220px;
+  padding: 10px;
+  border-radius: var(--radius-panel);
+  background: var(--color-surface-card-strong);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: var(--shadow-card-strong);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.a11y-toolbar__action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-input);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--color-text);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+}
+
+.a11y-toolbar__action:hover {
+  border-color: var(--color-brand);
+  color: var(--color-accent-gold);
+}
+
+.a11y-toolbar__action:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+/* Alto contraste: tokens + superfícies principais */
+html.high-contrast {
+  --color-brand: #ffff00;
+  --color-brand-hover: #ffff99;
+  --color-accent-gold: #ffff00;
+  --color-heading-warm: #ffff00;
+  --color-text: #ffffff;
+  --color-text-soft: #ffffff;
+  --color-surface-header: #000000;
+  --color-surface-card: #000000;
+  --color-surface-card-strong: #000000;
+  --color-site-photo-scrim: rgba(0, 0, 0, 1);
+  --shadow-header: none;
+  --shadow-card: none;
+  --shadow-card-strong: none;
+}
+
+html.high-contrast body {
+  background-color: #000000 !important;
+  background-image: none !important;
+  color: #ffff00 !important;
+}
+
+html.high-contrast .header-sticky,
+html.high-contrast .footer-content,
+html.high-contrast .logo-bg,
+html.high-contrast .slogan {
+  background: #000000 !important;
+  color: #ffff00 !important;
+  border-color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+html.high-contrast nav a,
+html.high-contrast nav button,
+html.high-contrast .hero-title,
+html.high-contrast .hero-subtitle,
+html.high-contrast footer,
+html.high-contrast footer a {
+  color: #ffff00 !important;
+  text-shadow: none !important;
+}
+
+html.high-contrast .btn-ortiz-outline,
+html.high-contrast .btn-ortiz-primary,
+html.high-contrast .btn-ortiz-hero {
+  background: #000000 !important;
+  color: #ffff00 !important;
+  border: 2px solid #ffffff !important;
+}
+
+html.high-contrast .btn-ortiz-outline:hover,
+html.high-contrast .btn-ortiz-primary:hover {
+  background: #1a1a1a !important;
+  color: #ffffff !important;
+}
+
+html.high-contrast .skip-to-content {
+  background: #000000;
+  color: #ffff00;
+  border-color: #ffffff;
+}
+
+html.high-contrast .a11y-toolbar__fab {
+  background: #000000;
+  color: #ffff00;
+  border-color: #ffffff;
+}
+
+html.high-contrast .a11y-toolbar__panel {
+  background: #000000;
+  border: 2px solid #ffffff;
+}
+
+html.high-contrast .a11y-toolbar__action {
+  background: #000000;
+  color: #ffff00;
+  border: 2px solid #ffffff;
+}
+
+html.high-contrast .a11y-toolbar__action:hover {
+  color: #ffffff;
+}
+
+/* Admin e modais (classes em app/admin/admin.css) */
+html.high-contrast .admin-shell,
+html.high-contrast .project-card-admin,
+html.high-contrast .admin-modal-inner,
+html.high-contrast .admin-confirm-dialog,
+html.high-contrast .admin-toolbar h1 {
+  background: #000000 !important;
+  color: #ffff00 !important;
+  border-color: #ffffff !important;
+}
+
+html.high-contrast .admin-modal-inner input,
+html.high-contrast .admin-modal-inner textarea,
+html.high-contrast .admin-modal-inner select {
+  background: #000000 !important;
+  color: #ffff00 !important;
+  border: 2px solid #ffffff !important;
+}
+
+html.high-contrast .btn-ortiz-success,
+html.high-contrast .btn-ortiz-danger,
+html.high-contrast .btn-ortiz-outline {
+  border: 2px solid #ffffff !important;
+}
+
+/* Projetos */
+html.high-contrast .projeto-card,
+html.high-contrast .projetos-shell,
+html.high-contrast .titulo-pagina {
+  color: #ffff00 !important;
+}
+
+html.high-contrast .projeto-card {
+  border: 2px solid #ffffff !important;
+  background: #000000 !important;
 }

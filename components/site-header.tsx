@@ -45,15 +45,19 @@ export function SiteHeader() {
     <header className="header-sticky">
       <div className="logo-area">
         <div className="logo-bg">
-          {/* Sem width/height no DOM: só CSS (evita conflito que distorce ao redimensionar). */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/logo-ortizltda.png"
-            alt="Logo Ortiz Ltda"
-            className="logo-img"
-            decoding="async"
-            fetchPriority="high"
-          />
+          <Link href="/" className="logo-link" aria-label="Ortiz Ltda — Início">
+            {/* logo-mark: colapsa linha em baixo do img (pattern típico; sem “caixa” extra de fundo). */}
+            <span className="logo-mark">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/logo-construtora-ortiz.png"
+                alt="Construtora Ortiz Ltda"
+                className="logo-img"
+                decoding="async"
+                fetchPriority="high"
+              />
+            </span>
+          </Link>
           <span className="slogan">Ortiz Ltda — Tradição e Precisão em Construção de Madeira</span>
         </div>
       </div>

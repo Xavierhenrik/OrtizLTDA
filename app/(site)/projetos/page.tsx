@@ -1,7 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useFocusTrap } from '@/lib/use-focus-trap';
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 
 type Projeto = {
   _id: string;
@@ -18,8 +19,11 @@ export default function ProjetosPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [currentProjectImages, setCurrentProjectImages] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [currentProjectTitle, setCurrentProjectTitle] = useState('');
   const galleryImagesRef = useRef<string[]>([]);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
   const titleId = useId();
 
   const carregarProjetos = useCallback(async () => {
@@ -46,7 +50,22 @@ export default function ProjetosPage() {
     setModalOpen(false);
     setCurrentProjectImages([]);
     setCurrentImageIndex(0);
+    setCurrentProjectTitle('');
   }, []);
+
+  useLayoutEffect(() => {
+    if (modalOpen) {
+      previousFocusRef.current = document.activeElement as HTMLElement | null;
+      return;
+    }
+    const prev = previousFocusRef.current;
+    previousFocusRef.current = null;
+    if (prev && document.body.contains(prev) && typeof prev.focus === 'function') {
+      prev.focus();
+    }
+  }, [modalOpen]);
+
+  useFocusTrap(modalRef, modalOpen);
 
   useEffect(() => {
     let raf2 = 0;
@@ -78,6 +97,7 @@ export default function ProjetosPage() {
   function openGalleryModal(projectId: string) {
     const project = projetos.find((p) => p._id === projectId);
     if (project?.imageUrls && project.imageUrls.length > 0) {
+      setCurrentProjectTitle(project.title);
       setCurrentProjectImages(project.imageUrls);
       setCurrentImageIndex(0);
       setModalOpen(true);
@@ -112,8 +132,9 @@ export default function ProjetosPage() {
     }
     return projetos.map((p) => {
       const thumb = p.imageUrls && p.imageUrls.length > 0 ? p.imageUrls[0] : null;
+      const headingId = `projeto-heading-${p._id}`;
       return (
-        <div className="projeto-card" key={p._id}>
+        <article className="projeto-card" key={p._id} aria-labelledby={headingId}>
           {thumb ? (
             <button
               type="button"
@@ -135,11 +156,11 @@ export default function ProjetosPage() {
             <div className="projeto-card__noimg" aria-hidden />
           )}
           <div className="info">
-            <h3>{p.title}</h3>
+            <h3 id={headingId}>{p.title}</h3>
             <div className="categoria">{p.category}</div>
             <div className="descricao">{p.description}</div>
           </div>
-        </div>
+        </article>
       );
     });
   }
@@ -147,20 +168,26 @@ export default function ProjetosPage() {
   return (
     <>
       <main
+        id="conteudo-principal"
+        tabIndex={-1}
         className={`projetos-shell${shellVisible ? ' projetos-shell--visible' : ''}`}
       >
-        <h1 className="titulo-pagina">Projetos Realizados</h1>
-        <div className="projetos-lista" id="projetosLista">
+        <h1 id="titulo-projetos" className="titulo-pagina">
+          Projetos Realizados
+        </h1>
+        <section className="projetos-lista" id="projetosLista" aria-labelledby="titulo-projetos">
           {renderLista()}
-        </div>
+        </section>
       </main>
 
       <div
         id="galleryModal"
+        ref={modalRef}
         className={`modal projetos-modal${modalOpen ? ' projetos-modal--open' : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        aria-hidden={!modalOpen}
         onClick={(e) => {
           if (e.target === e.currentTarget) closeGalleryModal();
         }}
@@ -181,7 +208,11 @@ export default function ProjetosPage() {
           {gallerySrc ? (
             <Image
               src={gallerySrc}
-              alt="Imagem do projeto na galeria"
+              alt={
+                currentProjectTitle
+                  ? `Foto do projeto na galeria: ${currentProjectTitle}`
+                  : 'Imagem do projeto na galeria'
+              }
               width={1200}
               height={800}
               className="projetos-modal-img"

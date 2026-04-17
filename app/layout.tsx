@@ -1,4 +1,7 @@
 import type { Metadata, Viewport } from 'next';
+import { AccessibilityToolbar } from '@/components/accessibility-toolbar';
+import { VlibrasWidget } from '@/components/vlibras-widget';
+import { AccessibilityProvider } from '@/lib/accessibility-context';
 import { Inter, Montserrat } from 'next/font/google';
 import './globals.css';
 
@@ -19,8 +22,8 @@ export const metadata: Metadata = {
   title: 'Ortiz Ltda — Construção Civil',
   description: 'Tradição e precisão em construção de madeira',
   icons: {
-    icon: '/logo-ortizltda.png',
-    apple: '/logo-ortizltda.png',
+    icon: '/logo-construtora-ortiz.png',
+    apple: '/logo-construtora-ortiz.png',
   },
 };
 
@@ -41,7 +44,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <AccessibilityProvider>
+          {children}
+          <AccessibilityToolbar />
+        </AccessibilityProvider>
+        <VlibrasWidget />
+      </body>
     </html>
   );
 }

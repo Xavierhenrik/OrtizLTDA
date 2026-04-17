@@ -4,7 +4,8 @@ import './admin-login.css';
 import './admin-login-modal.css';
 
 import { AdminLoginForm } from '@/components/admin-login-form';
-import { useEffect, useRef, useState } from 'react';
+import { useFocusTrap } from '@/lib/use-focus-trap';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 type AdminLoginModalProps = {
@@ -14,11 +15,26 @@ type AdminLoginModalProps = {
 
 export function AdminLoginModal({ open, onClose }: AdminLoginModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useLayoutEffect(() => {
+    if (open) {
+      previousFocusRef.current = document.activeElement as HTMLElement | null;
+      return;
+    }
+    const prev = previousFocusRef.current;
+    previousFocusRef.current = null;
+    if (prev && document.body.contains(prev) && typeof prev.focus === 'function') {
+      prev.focus();
+    }
+  }, [open]);
+
+  useFocusTrap(panelRef, open && mounted);
 
   useEffect(() => {
     if (!open) return;
@@ -81,8 +97,8 @@ export function AdminLoginModal({ open, onClose }: AdminLoginModalProps) {
             <p className="admin-mobile-notice__text">
               <i className="fas fa-desktop admin-mobile-notice__icon" aria-hidden />
               <span>
-                <strong>Uso recomendado no computador.</strong> O painel administrativo não foi otimizado para
-                telas pequenas; em celular o layout pode ficar apertado ou difícil de usar.
+                <strong>Experiência completa.</strong> Para revisar galerias e editar projetos com mais espaço na tela,
+                recomendamos abrir o painel no computador ou em tablet.
               </span>
             </p>
           </aside>

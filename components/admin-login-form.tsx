@@ -12,6 +12,9 @@ export function AdminLoginForm({ onSuccess }: AdminLoginFormProps) {
   const baseId = useId();
   const emailId = `${baseId}-email`;
   const passwordId = `${baseId}-password`;
+  const errorId = 'admin-login-error';
+  const invalid = !!errorMessage;
+  const describedBy = invalid ? errorId : undefined;
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -48,7 +51,15 @@ export function AdminLoginForm({ onSuccess }: AdminLoginFormProps) {
       <form onSubmit={onSubmit} noValidate>
         <div className="form-group">
           <label htmlFor={emailId}>Email</label>
-          <input type="email" id={emailId} name="email" required autoComplete="email" />
+          <input
+            type="email"
+            id={emailId}
+            name="email"
+            required
+            autoComplete="email"
+            aria-invalid={invalid}
+            aria-describedby={describedBy}
+          />
         </div>
         <div className="form-group">
           <label htmlFor={passwordId}>Senha</label>
@@ -58,12 +69,18 @@ export function AdminLoginForm({ onSuccess }: AdminLoginFormProps) {
             name="password"
             required
             autoComplete="current-password"
+            aria-invalid={invalid}
+            aria-describedby={describedBy}
           />
         </div>
         <button type="submit" className="btn-ortiz-primary btn-ortiz-static btn-login-submit">
           Entrar
         </button>
-        {errorMessage ? <div className="error-message">{errorMessage}</div> : null}
+        {errorMessage ? (
+          <div id={errorId} className="error-message" role="status" aria-live="polite">
+            {errorMessage}
+          </div>
+        ) : null}
       </form>
     </>
   );

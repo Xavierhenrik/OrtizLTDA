@@ -5,9 +5,8 @@ export default function HomePage() {
   return (
     <>
       <HeroBoot />
-      <main>
+      <main id="conteudo-principal" tabIndex={-1}>
         <section className="hero">
-          <div className="hero-overlay" />
           <div className="hero-content">
             <h1 className="hero-title">Mais do que obras, nós entregamos confiança</h1>
             <p className="hero-subtitle">
@@ -20,10 +19,10 @@ export default function HomePage() {
                 target="_blank"
                 rel="noreferrer"
               >
-                <i className="fa fa-comments" /> Fale Conosco
+                <i className="fa fa-comments" aria-hidden /> Fale Conosco
               </a>
               <Link href="/projetos" className="btn-ortiz-outline btn-ortiz-hero">
-                <i className="fa fa-briefcase" /> Ver Projetos
+                <i className="fa fa-briefcase" aria-hidden /> Ver Projetos
               </Link>
             </div>
           </div>
