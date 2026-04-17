@@ -1,29 +1,5 @@
-/* Login admin — mesmo vocabulário visual do painel /admin e modais */
+/* Formulário do modal de login admin — mesmo vocabulário do painel /admin */
 /* Cores fallback (hex) evitam cartão branco se variáveis :root atrasarem no bundle */
-
-main.admin-login-shell {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 2rem 1rem 3rem;
-  box-sizing: border-box;
-  position: relative;
-  z-index: 1;
-  min-height: min(70vh, 640px);
-  opacity: 0;
-  transform: translateY(14px);
-  transition:
-    opacity 0.65s ease,
-    transform 0.65s ease;
-}
-
-main.admin-login-shell.admin-login-shell--visible {
-  opacity: 1;
-  transform: translateY(0);
-}
 
 .admin-login-card-wrap {
   width: 100%;

@@ -13,11 +13,9 @@ export function SiteHeader() {
   const [adminLoginOpen, setAdminLoginOpen] = useState(false);
 
   const onAdminNav = useCallback(async () => {
-    if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
+    /* Só o painel; exclui /admin/logout (rota de saída). */
+    if (pathname === '/admin') {
       router.push('/admin');
-      return;
-    }
-    if (pathname === '/admin/login') {
       return;
     }
 
@@ -72,15 +70,9 @@ export function SiteHeader() {
             </Link>
           </li>
           <li>
-            {pathname === '/admin/login' ? (
-              <span className="active" aria-current="page">
-                Admin
-              </span>
-            ) : (
-              <button type="button" className={pathname.startsWith('/admin') ? 'active' : undefined} onClick={onAdminNav}>
-                Admin
-              </button>
-            )}
+            <button type="button" className={pathname.startsWith('/admin') ? 'active' : undefined} onClick={onAdminNav}>
+              Admin
+            </button>
           </li>
         </ul>
       </nav>

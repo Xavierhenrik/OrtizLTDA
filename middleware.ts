@@ -8,14 +8,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.rewrite(new URL('/api/auth/admin-login', request.url));
   }
 
+  /* GET /admin/login não é mais usado — login só pelo modal na home (POST mantido acima). */
+  if (
+    request.method === 'GET' &&
+    (path === '/admin/login' || path.startsWith('/admin/login/'))
+  ) {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+
   // Rotas que não precisam de refresh de sessão no middleware — evita loading infinito se o Supabase
   // demorar ou falhar na rede (getUser() bloqueava até a home).
-  if (
-    path === '/' ||
-    path === '/projetos' ||
-    path === '/admin/login' ||
-    path === '/admin/logout'
-  ) {
+  if (path === '/' || path === '/projetos' || path === '/admin/logout') {
     return NextResponse.next();
   }
 
@@ -24,15 +27,13 @@ export async function middleware(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const isLogin = path === '/admin/login' || path.startsWith('/admin/login/');
   const isLogout = path === '/admin/logout' || path.startsWith('/admin/logout/');
   const needsAdminPage =
-    path === '/admin' ||
-    (path.startsWith('/admin/') && !isLogin && !isLogout);
+    path === '/admin' || (path.startsWith('/admin/') && !isLogout);
 
   if (needsAdminPage) {
     if (!user) {
-      return NextResponse.redirect(new URL('/admin/login', request.url));
+      return NextResponse.redirect(new URL('/', request.url));
     }
 
     const { data: profile } = await supabase
@@ -42,7 +43,7 @@ export async function middleware(request: NextRequest) {
       .maybeSingle();
 
     if (!profile?.is_admin) {
-      return NextResponse.redirect(new URL('/admin/login', request.url));
+      return NextResponse.redirect(new URL('/', request.url));
     }
   }
 

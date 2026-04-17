@@ -1,6 +1,6 @@
 'use client';
 
-import '@/app/admin/login/login.css';
+import './admin-login.css';
 import './admin-login-modal.css';
 
 import { AdminLoginForm } from '@/components/admin-login-form';
