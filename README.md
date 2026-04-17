@@ -1,64 +1,42 @@
 # Site Institucional Ortiz Ltda
 
-Site institucional para a Ortiz Ltda, com painel administrativo para gerenciar e exibir projetos com múltiplas imagens.
+Site com painel administrativo para gerenciar e exibir projetos com múltiplas imagens.
 
-## Tecnologias Utilizadas
+## Stack
 
-*   **Backend:** Node.js, Express.js, MongoDB (com Mongoose)
-*   **Frontend:** HTML, CSS, JavaScript
-*   **Outras:** bcryptjs, express-session, connect-mongo, dotenv, multer
+- **Framework:** Next.js 14 (App Router), React 18, TypeScript
+- **Backend / dados:** Supabase (PostgreSQL, Auth, Storage)
+- **Estáticos:** `public/` (CSS global, assets)
 
-## Configuração e Execução
+## Configuração
 
-1.  Clone este repositório:
-    ```bash
-    git clone <URL_DO_SEU_REPOSITORIO>
-    cd ortizltda-site
-    ```
+1. Clone o repositório e instale dependências:
 
-2.  Instale as dependências:
-    ```bash
-    npm install
-    ```
+   ```bash
+   npm install
+   ```
 
-3.  Certifique-se de ter o **MongoDB** instalado e rodando na sua máquina.
+2. Copie `.env.example` para **`.env`** ou **`.env.local`** (na raiz, ao lado de `package.json`) e preencha:
 
-4.  Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
-    ```env
-    MONGODB_URI=mongodb://127.0.0.1:27017/ortizltda
-    SESSION_SECRET=sua_chave_secreta_muito_segura
-    ADMIN_EMAIL=seu_email@exemplo.com
-    ADMIN_PASSWORD=sua_senha_segura
-    ```
-    Substitua `sua_chave_secreta_muito_segura`, `seu_email@exemplo.com` e `sua_senha_segura` pelas suas credenciais desejadas para o usuário administrador inicial.
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
-5.  Crie o usuário administrador inicial executando:
-    ```bash
-    node scripts/createAdmin.js
-    ```
+   Depois de editar, reinicie o `npm run dev`. O `.env` já está no `.gitignore` (não commitar segredos).
 
-6.  Inicie o servidor:
-    ```bash
-    npm start
-    ```
+3. No Supabase, aplique as migrations em `supabase/migrations/` e configure o bucket `project-images`. Crie um usuário em **Authentication** e defina `is_admin = true` em `public.profiles` para o painel.
 
-7.  Acesse o site e o painel administrativo no seu navegador:
-    *   Site: `http://localhost:3000`
-    *   Página de Projetos: `http://localhost:3000/projetos`
-    *   Login Administrativo: `http://localhost:3000/admin/login`
+## Execução local
 
-## Funcionalidades
+```bash
+npm run dev
+```
 
-*   Exibição pública de projetos com galeria de imagens.
-*   Painel administrativo para CRUD de projetos.
-*   Upload de múltiplas imagens por projeto.
-*   Autenticação de administrador.
-*   Categorização de projetos.
+- Site: `http://localhost:3000`
+- Projetos: `http://localhost:3000/projetos`
+- Admin: `http://localhost:3000/admin/login`
 
-## Contribuição
+Produção (ex.: Vercel): `npm run build` e `npm start`; defina as mesmas variáveis no painel do provedor (não use o arquivo `.env` do disco lá).
 
-Instruções sobre como contribuir para o projeto (opcional).
+## Documentação da migração
 
-## Licença
-
-Informações sobre a licença do projeto (opcional). 
+Detalhes do plano Vercel + Supabase: `docs/migration-vercel-supabase/README.md`.
