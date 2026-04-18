@@ -14,7 +14,6 @@ function parseImageUrls(raw: ProjectRow['image_urls']): string[] {
   return [];
 }
 
-/** Formato compatível com o front legado (Mongo: _id, imageUrls, createdAt). */
 export function projectToApi(row: ProjectRow) {
   const imageUrls = parseImageUrls(row.image_urls);
   return {

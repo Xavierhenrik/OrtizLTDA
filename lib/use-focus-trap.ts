@@ -14,7 +14,6 @@ function getFocusableElements(container: HTMLElement): HTMLElement[] {
   });
 }
 
-/** Mantém Tab / Shift+Tab circulando dentro do container enquanto `enabled` for true. */
 export function useFocusTrap(containerRef: RefObject<HTMLElement | null>, enabled: boolean) {
   useEffect(() => {
     if (!enabled) return;

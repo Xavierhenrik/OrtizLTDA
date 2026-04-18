@@ -37,6 +37,25 @@ export function SiteFooter() {
             <i className="fab fa-whatsapp" aria-hidden />
           </a>
         </div>
+
+        <div className="footer-credit" aria-label="Site desenvolvido por BX Tecnologia">
+          <div className="footer-credit-inner">
+            <span className="footer-credit-prefix">Soluções digitais por</span>
+            <div className="footer-credit-brand">
+              <span className="logo-mark">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/bx-tecnologia-logo.png"
+                  alt=""
+                  className="logo-img logo-img--bx-footer"
+                  decoding="async"
+                  loading="lazy"
+                />
+              </span>
+              <span className="footer-credit-name">BX Tecnologia</span>
+            </div>
+          </div>
+        </div>
       </div>
     </footer>
   );

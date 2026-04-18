@@ -5,9 +5,6 @@ import { useEffect, useRef } from 'react';
 const VLIBRAS_SCRIPT_SRC = 'https://vlibras.gov.br/app/vlibras-plugin.js';
 const VLIBRAS_APP_BASE = 'https://vlibras.gov.br/app';
 
-/**
- * Widget oficial VLibras: estrutura DOM + script assíncrono + `new VLibras.Widget(...)`.
- */
 export function VlibrasWidget() {
   const initializedRef = useRef(false);
 
@@ -27,16 +24,12 @@ export function VlibrasWidget() {
         try {
           new window.VLibras.Widget(VLIBRAS_APP_BASE);
         } catch {
-          /* noop */
+          void 0;
         }
       }
     };
     document.body.appendChild(script);
     initializedRef.current = true;
-
-    return () => {
-      /* script permanece; widget gerencia próprio ciclo */
-    };
   }, []);
 
   return (

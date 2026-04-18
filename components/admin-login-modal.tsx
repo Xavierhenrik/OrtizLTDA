@@ -4,8 +4,9 @@ import './admin-login.css';
 import './admin-login-modal.css';
 
 import { AdminLoginForm } from '@/components/admin-login-form';
+import { useRestoreFocusWhenClosed } from '@/hooks/use-restore-focus-when-closed';
 import { useFocusTrap } from '@/lib/use-focus-trap';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 type AdminLoginModalProps = {
@@ -15,24 +16,13 @@ type AdminLoginModalProps = {
 
 export function AdminLoginModal({ open, onClose }: AdminLoginModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
-  const previousFocusRef = useRef<HTMLElement | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  useLayoutEffect(() => {
-    if (open) {
-      previousFocusRef.current = document.activeElement as HTMLElement | null;
-      return;
-    }
-    const prev = previousFocusRef.current;
-    previousFocusRef.current = null;
-    if (prev && document.body.contains(prev) && typeof prev.focus === 'function') {
-      prev.focus();
-    }
-  }, [open]);
+  useRestoreFocusWhenClosed(open);
 
   useFocusTrap(panelRef, open && mounted);
 

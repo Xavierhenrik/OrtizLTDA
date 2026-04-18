@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabase } from '@/lib/supabase/server';
 
-/** Handler interno para POST /admin/login (rewrite no middleware). */
 export async function POST(request: Request) {
   let body: { email?: string; password?: string };
   try {

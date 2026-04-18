@@ -1,6 +1,8 @@
 'use client';
 
 import { SiteHeader } from '@/components/site-header';
+import { useRestoreFocusWhenClosed } from '@/hooks/use-restore-focus-when-closed';
+import { useShellReveal } from '@/hooks/use-shell-reveal';
 import { useFocusTrap } from '@/lib/use-focus-trap';
 import Image from 'next/image';
 import {
@@ -9,18 +11,10 @@ import {
   FormEvent,
   useCallback,
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
-
-type Project = {
-  _id: string;
-  title: string;
-  description: string;
-  category: string;
-  imageUrls?: string[];
-};
+import type { ProjectApi } from '@/types/project';
 
 type PendingImage = { id: string; file: File };
 
@@ -37,7 +31,6 @@ function PendingImagePreview({ file, onRemove }: { file: File; onRemove: () => v
     <div className="admin-pending-item">
       <div className="admin-pending-thumb-wrap">
         {url ? (
-          // preview local (blob); next/image não aplica
           // eslint-disable-next-line @next/next/no-img-element
           <img src={url} alt="" className="admin-pending-thumb" />
         ) : (
@@ -118,8 +111,8 @@ function ExistingImageTile({
 }
 
 export default function AdminDashboardPage() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [shellVisible, setShellVisible] = useState(false);
+  const [projects, setProjects] = useState<ProjectApi[]>([]);
+  const shellVisible = useShellReveal();
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('Novo Projeto');
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
@@ -138,8 +131,6 @@ export default function AdminDashboardPage() {
   const projectModalRef = useRef<HTMLDivElement>(null);
   const confirmDialogRef = useRef<HTMLDivElement>(null);
   const confirmCancelRef = useRef<HTMLButtonElement>(null);
-  const previousFocusProjectRef = useRef<HTMLElement | null>(null);
-  const previousFocusConfirmRef = useRef<HTMLElement | null>(null);
 
   const closeModal = useCallback(() => {
     if (enterAnimTimerRef.current) {
@@ -154,7 +145,7 @@ export default function AdminDashboardPage() {
     setSaveError('');
   }, []);
 
-  const openModal = useCallback((project?: Project) => {
+  const openModal = useCallback((project?: ProjectApi) => {
     setSaveError('');
     if (project) {
       setModalTitle('Editar Projeto');
@@ -183,7 +174,7 @@ export default function AdminDashboardPage() {
   const loadProjects = useCallback(async () => {
     try {
       const response = await fetch('/api/projects');
-      const data = (await response.json()) as Project[];
+      const data = (await response.json()) as ProjectApi[];
       setProjects(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error(e);
@@ -214,40 +205,8 @@ export default function AdminDashboardPage() {
     return () => window.removeEventListener('keydown', onKey);
   }, [pendingDelete]);
 
-  useEffect(() => {
-    let raf2 = 0;
-    const raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(() => setShellVisible(true));
-    });
-    return () => {
-      cancelAnimationFrame(raf1);
-      cancelAnimationFrame(raf2);
-    };
-  }, []);
-
-  useLayoutEffect(() => {
-    if (modalOpen) {
-      previousFocusProjectRef.current = document.activeElement as HTMLElement | null;
-      return;
-    }
-    const prev = previousFocusProjectRef.current;
-    previousFocusProjectRef.current = null;
-    if (prev && document.body.contains(prev) && typeof prev.focus === 'function') {
-      prev.focus();
-    }
-  }, [modalOpen]);
-
-  useLayoutEffect(() => {
-    if (pendingDelete) {
-      previousFocusConfirmRef.current = document.activeElement as HTMLElement | null;
-      return;
-    }
-    const prev = previousFocusConfirmRef.current;
-    previousFocusConfirmRef.current = null;
-    if (prev && document.body.contains(prev) && typeof prev.focus === 'function') {
-      prev.focus();
-    }
-  }, [pendingDelete]);
+  useRestoreFocusWhenClosed(modalOpen);
+  useRestoreFocusWhenClosed(!!pendingDelete);
 
   useFocusTrap(projectModalRef, modalOpen);
   useFocusTrap(confirmDialogRef, !!pendingDelete);
@@ -345,7 +304,7 @@ export default function AdminDashboardPage() {
     try {
       const response = await fetch(url, { method, body: formData });
       if (response.ok) {
-        const saved = (await response.json()) as Project;
+        const saved = (await response.json()) as ProjectApi;
         const prevKept = new Set(keptImageUrls);
         const nextUrls = saved.imageUrls?.length ? [...saved.imageUrls] : [];
         const newlyUploaded = nextUrls.filter((u) => !prevKept.has(u));

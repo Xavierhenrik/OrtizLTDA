@@ -254,6 +254,87 @@ nav span.active {
 .footer-social a:hover {
   color: var(--color-brand);
 }
+
+/* Assinatura BX Tecnologia — mesma lógica do header: .logo-mark + .logo-img + mix-blend-mode: screen */
+/*
+ * Não usar filter/box-shadow no wrapper da imagem nem opacity em ancestral da img:
+ * isso quebra o blend com o fundo #181818 e o preto do PNG reaparece.
+ */
+.footer-credit {
+  width: 100%;
+  max-width: 960px;
+  margin: 4px auto 0;
+  padding-top: 20px;
+  padding-bottom: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  cursor: default;
+}
+
+.footer-credit-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.footer-credit-prefix {
+  font-size: 0.65rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #888888;
+  white-space: nowrap;
+}
+
+.footer-credit-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Tamanho só no rodapé; especificidade > .logo-img (incl. media query do header) */
+.footer-credit .logo-img.logo-img--bx-footer {
+  height: 28px;
+  max-width: 120px;
+}
+
+.footer-credit-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+
+@media (max-width: 900px) {
+  .footer-credit {
+    padding-bottom: max(1.75rem, env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (max-width: 480px) {
+  .footer-credit {
+    padding-bottom: max(2rem, calc(env(safe-area-inset-bottom, 0px) + 1.25rem));
+  }
+
+  .footer-credit-prefix {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+  }
+
+  .footer-credit .logo-img.logo-img--bx-footer {
+    height: 24px;
+    max-width: 100px;
+  }
+
+  .footer-credit-name {
+    font-size: 0.78rem;
+  }
+}
+
 .whatsapp-float {
   display: none !important;
 }

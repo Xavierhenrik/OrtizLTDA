@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { getAdminUser } from '@/lib/auth-admin';
+import {
+  extractProjectFormFields,
+  extractProjectImageFiles,
+} from '@/lib/projects/form-parse';
 import { projectToApi, sanitizeFilename, type ProjectRow } from '@/lib/project-map';
 import { PROJECT_IMAGES_BUCKET } from '@/lib/supabase-storage';
 
@@ -35,12 +39,8 @@ export async function POST(request: Request) {
     }
 
     const formData = await request.formData();
-    const title = String(formData.get('title') ?? '');
-    const description = String(formData.get('description') ?? '');
-    const category = String(formData.get('category') ?? '');
-    const files = formData
-      .getAll('images')
-      .filter((f): f is File => typeof f === 'object' && f !== null && 'arrayBuffer' in f && (f as File).size > 0);
+    const { title, description, category } = extractProjectFormFields(formData);
+    const files = extractProjectImageFiles(formData);
 
     const { data: inserted, error: insErr } = await supabase
       .from('projects')

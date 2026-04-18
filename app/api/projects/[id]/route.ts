@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { getAdminUser } from '@/lib/auth-admin';
+import {
+  extractProjectFormFields,
+  extractProjectImageFiles,
+  parseKeepImageUrls,
+} from '@/lib/projects/form-parse';
 import { projectToApi, sanitizeFilename, type ProjectRow } from '@/lib/project-map';
 import { PROJECT_IMAGES_BUCKET, projectImagePathFromPublicUrl } from '@/lib/supabase-storage';
 
@@ -18,27 +23,17 @@ export async function PUT(request: Request, { params }: Ctx) {
     }
 
     const formData = await request.formData();
-    const title = String(formData.get('title') ?? '');
-    const description = String(formData.get('description') ?? '');
-    const category = String(formData.get('category') ?? '');
-    const files = formData
-      .getAll('images')
-      .filter((f): f is File => typeof f === 'object' && f !== null && 'arrayBuffer' in f && (f as File).size > 0);
+    const { title, description, category } = extractProjectFormFields(formData);
+    const files = extractProjectImageFiles(formData);
 
     const hasExplicitKeep = formData.has('keepImageUrls');
     let keepUrlsFromClient: string[] | undefined;
     if (hasExplicitKeep) {
-      try {
-        const raw = formData.get('keepImageUrls');
-        const parsed = JSON.parse(String(raw ?? '[]'));
-        if (Array.isArray(parsed)) {
-          keepUrlsFromClient = parsed.filter((u): u is string => typeof u === 'string');
-        } else {
-          keepUrlsFromClient = [];
-        }
-      } catch {
+      const parsed = parseKeepImageUrls(formData);
+      if (!parsed.ok) {
         return NextResponse.json({ message: 'Lista de imagens inválida' }, { status: 400 });
       }
+      keepUrlsFromClient = parsed.urls;
     }
 
     const { data: row, error: rowErr } = await supabase

@@ -18,7 +18,7 @@ export function createServerSupabase() {
               cookieStore.set(name, value, options)
             );
           } catch {
-            // set em Server Component sem mutação — middleware renova sessão
+            void 0;
           }
         },
       },

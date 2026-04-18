@@ -27,7 +27,6 @@ export const metadata: Metadata = {
   },
 };
 
-/** Viewport explícito: escala correta em mobile/tablet e suporte a safe-area (notch). */
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,

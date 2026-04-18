@@ -1,21 +1,16 @@
 'use client';
 
 import Image from 'next/image';
+import { useRestoreFocusWhenClosed } from '@/hooks/use-restore-focus-when-closed';
+import { useShellReveal } from '@/hooks/use-shell-reveal';
 import { useFocusTrap } from '@/lib/use-focus-trap';
-import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
-
-type Projeto = {
-  _id: string;
-  title: string;
-  category: string;
-  description: string;
-  imageUrls?: string[];
-};
+import type { ProjectApi } from '@/types/project';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 
 export default function ProjetosPage() {
-  const [projetos, setProjetos] = useState<Projeto[]>([]);
+  const [projetos, setProjetos] = useState<ProjectApi[]>([]);
   const [loadState, setLoadState] = useState<'loading' | 'done'>('loading');
-  const [shellVisible, setShellVisible] = useState(false);
+  const shellVisible = useShellReveal();
   const [modalOpen, setModalOpen] = useState(false);
   const [currentProjectImages, setCurrentProjectImages] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -23,13 +18,12 @@ export default function ProjetosPage() {
   const galleryImagesRef = useRef<string[]>([]);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
-  const previousFocusRef = useRef<HTMLElement | null>(null);
   const titleId = useId();
 
   const carregarProjetos = useCallback(async () => {
     try {
       const resposta = await fetch('/api/projects');
-      const data = (await resposta.json()) as Projeto[];
+      const data = (await resposta.json()) as ProjectApi[];
       setProjetos(Array.isArray(data) ? data : []);
     } catch {
       setProjetos([]);
@@ -53,30 +47,9 @@ export default function ProjetosPage() {
     setCurrentProjectTitle('');
   }, []);
 
-  useLayoutEffect(() => {
-    if (modalOpen) {
-      previousFocusRef.current = document.activeElement as HTMLElement | null;
-      return;
-    }
-    const prev = previousFocusRef.current;
-    previousFocusRef.current = null;
-    if (prev && document.body.contains(prev) && typeof prev.focus === 'function') {
-      prev.focus();
-    }
-  }, [modalOpen]);
+  useRestoreFocusWhenClosed(modalOpen);
 
   useFocusTrap(modalRef, modalOpen);
-
-  useEffect(() => {
-    let raf2 = 0;
-    const raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(() => setShellVisible(true));
-    });
-    return () => {
-      cancelAnimationFrame(raf1);
-      cancelAnimationFrame(raf2);
-    };
-  }, []);
 
   useEffect(() => {
     if (!modalOpen) return;

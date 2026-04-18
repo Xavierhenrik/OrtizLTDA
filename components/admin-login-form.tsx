@@ -3,7 +3,6 @@
 import { FormEvent, useId, useState } from 'react';
 
 type AdminLoginFormProps = {
-  /** Chamado após login bem-sucedido (ex.: fechar modal antes do redirect). */
   onSuccess?: () => void;
 };
 

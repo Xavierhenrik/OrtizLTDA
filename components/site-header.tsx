@@ -6,14 +6,12 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
 
-/** Cabeçalho global (Início / Projetos / Admin) — alinhado a `public/style.css`. */
 export function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const [adminLoginOpen, setAdminLoginOpen] = useState(false);
 
   const onAdminNav = useCallback(async () => {
-    /* Só o painel; exclui /admin/logout (rota de saída). */
     if (pathname === '/admin') {
       router.push('/admin');
       return;
@@ -36,7 +34,7 @@ export function SiteHeader() {
         }
       }
     } catch {
-      /* abre o modal */
+      void 0;
     }
     setAdminLoginOpen(true);
   }, [pathname, router]);
@@ -46,7 +44,6 @@ export function SiteHeader() {
       <div className="logo-area">
         <div className="logo-bg">
           <Link href="/" className="logo-link" aria-label="Ortiz Ltda — Início">
-            {/* logo-mark: colapsa linha em baixo do img (pattern típico; sem “caixa” extra de fundo). */}
             <span className="logo-mark">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img

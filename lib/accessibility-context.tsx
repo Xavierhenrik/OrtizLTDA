@@ -15,7 +15,6 @@ const STORAGE_CONTRAST = 'ortiz-a11y-high-contrast';
 
 const FONT_STEP_MIN = -2;
 const FONT_STEP_MAX = 4;
-/** Incremento por passo (~6,25% por nível em relação à base 1) */
 const FONT_STEP_DELTA = 0.0625;
 
 export type AccessibilityContextValue = {
@@ -59,7 +58,7 @@ export function AccessibilityProvider({ children }: { children: ReactNode }) {
         setHighContrast(true);
       }
     } catch {
-      /* private mode / indisponível */
+      void 0;
     }
     setReady(true);
   }, []);
@@ -71,7 +70,7 @@ export function AccessibilityProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(STORAGE_FONT, String(fontStep));
       localStorage.setItem(STORAGE_CONTRAST, highContrast ? '1' : '0');
     } catch {
-      /* noop */
+      void 0;
     }
   }, [fontStep, highContrast, ready]);
 
