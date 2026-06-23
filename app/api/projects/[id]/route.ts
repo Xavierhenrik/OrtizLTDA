@@ -6,8 +6,9 @@ import {
   extractProjectImageFiles,
   parseKeepImageUrls,
 } from '@/lib/projects/form-parse';
-import { projectToApi, sanitizeFilename, type ProjectRow } from '@/lib/project-map';
+import { projectToApi, type ProjectRow } from '@/lib/project-map';
 import { PROJECT_IMAGES_BUCKET, projectImagePathFromPublicUrl } from '@/lib/supabase-storage';
+import { uploadProjectImageFiles } from '@/lib/projects/upload-images';
 
 export const runtime = 'nodejs';
 
@@ -50,22 +51,12 @@ export async function PUT(request: Request, { params }: Ctx) {
     const existingFromDb = Array.isArray(row?.image_urls) ? (row.image_urls as string[]) : [];
 
     const uploaded: string[] = [];
-    for (const file of files) {
-      const buf = Buffer.from(await file.arrayBuffer());
-      const name = `${Date.now()}-${sanitizeFilename(file.name)}`;
-      const storagePath = `projects/${id}/${name}`;
-      const { error: upErr } = await supabase.storage.from(PROJECT_IMAGES_BUCKET).upload(storagePath, buf, {
-        contentType: file.type || 'application/octet-stream',
-        upsert: false,
-      });
-
-      if (upErr) {
-        console.error(upErr);
-        return NextResponse.json({ message: 'Erro ao enviar imagens' }, { status: 500 });
+    if (files.length > 0) {
+      const { urls, error: uploadError } = await uploadProjectImageFiles(supabase, id, files);
+      if (uploadError) {
+        return NextResponse.json({ message: uploadError }, { status: 500 });
       }
-
-      const { data: pub } = supabase.storage.from(PROJECT_IMAGES_BUCKET).getPublicUrl(storagePath);
-      uploaded.push(pub.publicUrl);
+      uploaded.push(...urls);
     }
 
     let mergedImageUrls: string[] | undefined;
