@@ -14,11 +14,90 @@ import {
   useRef,
   useState,
 } from 'react';
+import {
+  getFileRelativePath,
+  groupFilesByFolder,
+  processIncomingImageFiles,
+} from '@/lib/projects/image-files';
+import {
+  BatchUploadError,
+  uploadImagesInBatches,
+  type BatchUploadProgress,
+} from '@/lib/projects/client-upload';
 import type { ProjectApi } from '@/types/project';
 
-type PendingImage = { id: string; file: File };
+type ImportStats = {
+  total: number;
+  accepted: number;
+  ignored: number;
+  duplicates: number;
+  folderCount: number;
+};
 
-function PendingImagePreview({ file, onRemove }: { file: File; onRemove: () => void }) {
+type PendingImage = { id: string; file: File; relativePath?: string };
+
+const PENDING_PREVIEW_LIMIT = 12;
+
+function UploadProgressBar({ progress }: { progress: BatchUploadProgress }) {
+  const pct = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
+
+  return (
+    <div className="admin-upload-progress" role="status" aria-live="polite">
+      <div className="admin-upload-progress-header">
+        <span className="admin-upload-progress-label">
+          Enviando imagens {progress.completed}/{progress.total}
+        </span>
+        <span className="admin-upload-progress-pct">{pct}%</span>
+      </div>
+      <div
+        className="admin-upload-progress-track"
+        role="progressbar"
+        aria-valuenow={progress.completed}
+        aria-valuemin={0}
+        aria-valuemax={progress.total}
+        aria-label={`Envio de imagens: ${progress.completed} de ${progress.total}`}
+      >
+        <div className="admin-upload-progress-fill" style={{ width: `${pct}%` }} />
+      </div>
+      <p className="admin-upload-progress-meta">
+        Lote {progress.batchIndex}/{progress.batchTotal}
+      </p>
+    </div>
+  );
+}
+
+function formatImportStats(stats: ImportStats): string {
+  if (stats.accepted === 0) {
+    const extras: string[] = [];
+    if (stats.ignored > 0) extras.push(`${stats.ignored} ignorados`);
+    if (stats.duplicates > 0) extras.push(`${stats.duplicates} duplicados`);
+    const suffix = extras.length ? ` (${extras.join(', ')})` : '';
+    return `Nenhuma imagem válida encontrada${suffix}`;
+  }
+
+  const base =
+    stats.folderCount > 0
+      ? stats.folderCount === 1
+        ? `${stats.accepted} imagens adicionadas de 1 pasta`
+        : `${stats.accepted} imagens adicionadas de ${stats.folderCount} pastas`
+      : `${stats.accepted} imagens adicionadas`;
+
+  const extras: string[] = [];
+  if (stats.ignored > 0) extras.push(`${stats.ignored} ignorados`);
+  if (stats.duplicates > 0) extras.push(`${stats.duplicates} duplicados`);
+
+  return extras.length ? `${base} (${extras.join(', ')})` : base;
+}
+
+function PendingImagePreview({
+  file,
+  relativePath,
+  onRemove,
+}: {
+  file: File;
+  relativePath?: string;
+  onRemove: () => void;
+}) {
   const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -45,10 +124,74 @@ function PendingImagePreview({ file, onRemove }: { file: File; onRemove: () => v
           <i className="fas fa-times" aria-hidden />
         </button>
       </div>
-      <span className="admin-pending-name" title={file.name}>
+      <span className="admin-pending-name" title={relativePath ?? getFileRelativePath(file)}>
         {file.name}
       </span>
     </div>
+  );
+}
+
+function PendingImagesList({
+  items,
+  onRemove,
+}: {
+  items: PendingImage[];
+  onRemove: (id: string) => void;
+}) {
+  const files = items.map((p) => p.file);
+  const fileGroups = groupFilesByFolder(files);
+  const isFlat = fileGroups.size === 1 && fileGroups.has('');
+
+  const lookup = new Map<string, PendingImage>();
+  items.forEach((item) => {
+    lookup.set(`${getFileRelativePath(item.file)}\0${item.file.size}`, item);
+  });
+
+  const renderItem = (item: PendingImage) => (
+    <li key={item.id}>
+      <PendingImagePreview
+        file={item.file}
+        relativePath={item.relativePath}
+        onRemove={() => onRemove(item.id)}
+      />
+    </li>
+  );
+
+  if (isFlat) {
+    return (
+      <ul className="admin-pending-attachments" aria-live="polite">
+        {items.map((item) => renderItem(item))}
+      </ul>
+    );
+  }
+
+  const folders = Array.from(fileGroups.keys()).sort((a, b) =>
+    a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
+  );
+
+  return (
+    <>
+      {folders.map((folder) => {
+        const groupFiles = fileGroups.get(folder)!;
+        const groupItems = groupFiles.map(
+          (f) => lookup.get(`${getFileRelativePath(f)}\0${f.size}`)!
+        );
+        const visible = groupItems.slice(0, PENDING_PREVIEW_LIMIT);
+        const remaining = groupItems.length - visible.length;
+
+        return (
+          <div key={folder || '__root__'} className="admin-pending-folder-group">
+            <span className="admin-pending-folder-title">{folder || '(raiz)'}</span>
+            <ul className="admin-pending-attachments" aria-live="polite">
+              {visible.map((item) => renderItem(item))}
+            </ul>
+            {remaining > 0 ? (
+              <p className="admin-pending-more">e mais {remaining} imagens</p>
+            ) : null}
+          </div>
+        );
+      })}
+    </>
   );
 }
 
@@ -125,6 +268,10 @@ export default function AdminDashboardPage() {
   const [enteringImageUrls, setEnteringImageUrls] = useState<string[]>([]);
   const enterAnimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
+  const [importStats, setImportStats] = useState<ImportStats | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<BatchUploadProgress | null>(null);
   const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string } | null>(null);
   const [saveError, setSaveError] = useState('');
   const [deleteError, setDeleteError] = useState('');
@@ -142,11 +289,13 @@ export default function AdminDashboardPage() {
     setCurrentProjectId(null);
     setPendingImages([]);
     setKeptImageUrls([]);
+    setImportStats(null);
     setSaveError('');
   }, []);
 
   const openModal = useCallback((project?: ProjectApi) => {
     setSaveError('');
+    setImportStats(null);
     if (project) {
       setModalTitle('Editar Projeto');
       setCurrentProjectId(project._id);
@@ -235,18 +384,42 @@ export default function AdminDashboardPage() {
   }, [pendingDelete]);
 
   function pushPendingFiles(fileList: FileList | File[]) {
-    const files = Array.from(fileList).filter((f) => f.type.startsWith('image/'));
+    const { files, stats } = processIncomingImageFiles(fileList);
+
+    if (stats.accepted > 0 || stats.total > 0) {
+      setImportStats(stats);
+    }
+
     if (!files.length) return;
+
     setPendingImages((prev) => {
+      const existingKeys = new Set(
+        prev.map((p) => `${getFileRelativePath(p.file)}\0${p.file.size}`)
+      );
       const next = [...prev];
       files.forEach((file, i) => {
-        next.push({ id: `${Date.now()}-${i}-${file.name}-${file.size}`, file });
+        const relativePath = getFileRelativePath(file);
+        const key = `${relativePath}\0${file.size}`;
+        if (existingKeys.has(key)) return;
+        existingKeys.add(key);
+        next.push({
+          id: `${Date.now()}-${i}-${relativePath}-${file.size}`,
+          file,
+          relativePath: relativePath !== file.name ? relativePath : undefined,
+        });
       });
       return next;
     });
   }
 
   function onImageFilesChange(e: ChangeEvent<HTMLInputElement>) {
+    const list = e.target.files;
+    if (!list?.length) return;
+    pushPendingFiles(list);
+    e.target.value = '';
+  }
+
+  function onFolderFilesChange(e: ChangeEvent<HTMLInputElement>) {
     const list = e.target.files;
     if (!list?.length) return;
     pushPendingFiles(list);
@@ -286,6 +459,19 @@ export default function AdminDashboardPage() {
 
   async function onSubmitProject(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (isSaving) return;
+
+    setIsSaving(true);
+    setSaveError('');
+
+    const pendingFiles = pendingImages.map((p) => p.file);
+    const totalPending = pendingFiles.length;
+
+    if (totalPending > 0) {
+      setUploadProgress({ completed: 0, total: totalPending, batchIndex: 0, batchTotal: 0 });
+    } else {
+      setUploadProgress(null);
+    }
 
     const formData = new FormData();
     formData.append('title', title);
@@ -294,50 +480,86 @@ export default function AdminDashboardPage() {
     if (currentProjectId) {
       formData.append('keepImageUrls', JSON.stringify(keptImageUrls));
     }
-    for (const { file } of pendingImages) {
-      formData.append('images', file);
-    }
 
     const url = currentProjectId ? `/api/projects/${currentProjectId}` : '/api/projects';
     const method = currentProjectId ? 'PUT' : 'POST';
+    let saved: ProjectApi | null = null;
 
     try {
       const response = await fetch(url, { method, body: formData });
-      if (response.ok) {
-        const saved = (await response.json()) as ProjectApi;
-        const prevKept = new Set(keptImageUrls);
-        const nextUrls = saved.imageUrls?.length ? [...saved.imageUrls] : [];
-        const newlyUploaded = nextUrls.filter((u) => !prevKept.has(u));
+      if (!response.ok) {
+        setSaveError('Erro ao salvar projeto. Tente novamente.');
+        return;
+      }
 
-        setKeptImageUrls(nextUrls);
-        setPendingImages([]);
+      saved = (await response.json()) as ProjectApi;
+      const prevKept = new Set(keptImageUrls);
+      let newlyUploaded: string[] = [];
 
-        if (enterAnimTimerRef.current) {
-          clearTimeout(enterAnimTimerRef.current);
-        }
-        if (newlyUploaded.length > 0) {
-          setEnteringImageUrls(newlyUploaded);
-          enterAnimTimerRef.current = setTimeout(() => {
-            setEnteringImageUrls([]);
-            enterAnimTimerRef.current = null;
-          }, 750);
-        } else {
+      if (totalPending > 0) {
+        const { imageUrls, uploadedUrls } = await uploadImagesInBatches(
+          saved!._id,
+          pendingFiles,
+          setUploadProgress
+        );
+        saved = { ...saved!, imageUrls };
+        newlyUploaded = uploadedUrls;
+      } else {
+        const nextUrls = saved!.imageUrls?.length ? [...saved!.imageUrls] : [];
+        newlyUploaded = nextUrls.filter((u) => !prevKept.has(u));
+      }
+
+      const nextUrls = saved!.imageUrls?.length ? [...saved!.imageUrls] : [];
+
+      setKeptImageUrls(nextUrls);
+      setPendingImages([]);
+      setImportStats(null);
+
+      if (enterAnimTimerRef.current) {
+        clearTimeout(enterAnimTimerRef.current);
+      }
+      if (newlyUploaded.length > 0) {
+        setEnteringImageUrls(newlyUploaded);
+        enterAnimTimerRef.current = setTimeout(() => {
           setEnteringImageUrls([]);
-        }
+          enterAnimTimerRef.current = null;
+        }, 750);
+      } else {
+        setEnteringImageUrls([]);
+      }
 
-        if (!currentProjectId && saved._id) {
+      if (!currentProjectId && saved!._id) {
+        setCurrentProjectId(saved!._id);
+        setModalTitle('Editar Projeto');
+      }
+
+      loadProjects();
+      setSaveError('');
+    } catch (err) {
+      console.error(err);
+
+      if (err instanceof BatchUploadError && err.uploadedCount > 0) {
+        setKeptImageUrls(err.imageUrls);
+        setPendingImages((prev) => prev.slice(err.uploadedCount));
+        if (!currentProjectId && saved?._id) {
           setCurrentProjectId(saved._id);
           setModalTitle('Editar Projeto');
         }
-
         loadProjects();
-        setSaveError('');
-      } else {
-        setSaveError('Erro ao salvar projeto. Tente novamente.');
+        setSaveError(
+          `${err.uploadedCount} imagens enviadas; falha no restante. Clique em Salvar para continuar.`
+        );
+        return;
       }
-    } catch (err) {
-      console.error(err);
-      setSaveError('Erro ao salvar projeto. Tente novamente.');
+
+      setSaveError(
+        totalPending > 0
+          ? 'Erro ao enviar imagens. O projeto foi salvo; tente adicionar as imagens restantes novamente.'
+          : 'Erro ao salvar projeto. Tente novamente.'
+      );
+    } finally {
+      setIsSaving(false);
+      setUploadProgress(null);
     }
   }
 
@@ -504,7 +726,7 @@ export default function AdminDashboardPage() {
         <div className="admin-modal-inner">
           <div className="modal-header">
             <h2 id="admin-project-modal-title">{modalTitle}</h2>
-            <button type="button" className="close-btn" onClick={closeModal} aria-label="Fechar">
+            <button type="button" className="close-btn" onClick={closeModal} aria-label="Fechar" disabled={isSaving}>
               &times;
             </button>
           </div>
@@ -578,43 +800,77 @@ export default function AdminDashboardPage() {
                       aria-labelledby="images-label"
                       onChange={onImageFilesChange}
                     />
+                    <input
+                      ref={folderInputRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      // @ts-expect-error webkitdirectory is non-standard
+                      webkitdirectory=""
+                      directory=""
+                      className="admin-file-input"
+                      aria-hidden
+                      tabIndex={-1}
+                      onChange={onFolderFilesChange}
+                    />
                     <div className="admin-dropzone-icon" aria-hidden>
                       <i className="fas fa-cloud-upload-alt" aria-hidden />
                     </div>
                     <p className="admin-dropzone-title">Adicionar imagens</p>
                     <p className="admin-dropzone-text">
-                      Arraste arquivos aqui ou use o botão — <strong>várias imagens</strong> de uma vez.
+                      Arraste arquivos ou pastas aqui ou use os botões — <strong>várias imagens</strong> de uma
+                      vez.
                     </p>
-                    <button
-                      type="button"
-                      className="btn-ortiz-outline admin-dropzone-btn"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <i className="fas fa-folder-open" aria-hidden /> Escolher arquivos
-                    </button>
+                    <div className="admin-dropzone-actions">
+                      <button
+                        type="button"
+                        className="btn-ortiz-outline admin-dropzone-btn"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <i className="fas fa-file-image" aria-hidden /> Escolher arquivos
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-ortiz-outline admin-dropzone-btn"
+                        onClick={() => folderInputRef.current?.click()}
+                      >
+                        <i className="fas fa-folder-open" aria-hidden /> Escolher pasta
+                      </button>
+                    </div>
                   </div>
+
+                  {importStats ? (
+                    <p className="admin-import-stats" role="status" aria-live="polite">
+                      {formatImportStats(importStats)}
+                    </p>
+                  ) : null}
 
                   {pendingImages.length > 0 && (
                     <div className="admin-images-block admin-images-block--pending">
                       <span className="admin-images-block-title">Novas (envio ao salvar)</span>
-                      <ul className="admin-pending-attachments" aria-live="polite">
-                        {pendingImages.map((item) => (
-                          <li key={item.id}>
-                            <PendingImagePreview file={item.file} onRemove={() => removePendingImage(item.id)} />
-                          </li>
-                        ))}
-                      </ul>
+                      <PendingImagesList items={pendingImages} onRemove={removePendingImage} />
                     </div>
                   )}
                 </div>
               </div>
             </div>
             <div className="modal-footer">
-              <button type="button" className="btn-ortiz-outline btn-modal-cancel" onClick={closeModal}>
+              {uploadProgress ? <UploadProgressBar progress={uploadProgress} /> : null}
+              <button
+                type="button"
+                className="btn-ortiz-outline btn-modal-cancel"
+                onClick={closeModal}
+                disabled={isSaving}
+              >
                 Cancelar
               </button>
-              <button type="submit" className="btn-ortiz-primary btn-ortiz-static btn-modal-save">
-                <i className="fas fa-save" aria-hidden /> Salvar
+              <button
+                type="submit"
+                className="btn-ortiz-primary btn-ortiz-static btn-modal-save"
+                disabled={isSaving}
+              >
+                <i className={`fas ${isSaving ? 'fa-spinner fa-spin' : 'fa-save'}`} aria-hidden />{' '}
+                {isSaving ? 'Salvando…' : 'Salvar'}
               </button>
             </div>
           </form>

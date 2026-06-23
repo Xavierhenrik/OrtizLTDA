@@ -180,7 +180,7 @@ main.admin-shell.admin-shell--visible {
   border-radius: var(--radius-panel-lg);
   padding: 1.75rem 2rem;
   width: 100%;
-  max-width: min(920px, calc(100vw - 2rem));
+  max-width: min(1320px, calc(100vw - 2rem));
   max-height: 92vh;
   overflow-x: hidden;
   overflow-y: auto;
@@ -190,8 +190,8 @@ main.admin-shell.admin-shell--visible {
 
 .admin-modal-body {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 1.5rem 1.75rem;
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  gap: 1.5rem 2rem;
   align-items: start;
 }
 
@@ -339,8 +339,8 @@ main.admin-shell.admin-shell--visible {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
   gap: 0.75rem;
   max-width: 100%;
 }
@@ -350,7 +350,8 @@ main.admin-shell.admin-shell--visible {
   flex-direction: column;
   align-items: center;
   gap: 0.35rem;
-  max-width: 104px;
+  max-width: none;
+  width: 100%;
 }
 
 .admin-gallery-item--enter {
@@ -517,6 +518,31 @@ main.admin-shell.admin-shell--visible {
   margin: 0 auto;
 }
 
+.admin-dropzone-actions {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+}
+
+.admin-dropzone-actions .admin-dropzone-btn {
+  margin: 0;
+}
+
+.admin-import-stats {
+  padding: 0.65rem 0.85rem;
+  margin: 0.75rem 0 0;
+  border-radius: var(--radius-card);
+  background: rgba(76, 175, 80, 0.12);
+  border: 1px solid rgba(76, 175, 80, 0.35);
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
 .admin-modal-inner .admin-dropzone .btn-ortiz-outline {
   border-color: rgba(255, 152, 0, 0.55);
   color: var(--color-accent-gold);
@@ -598,6 +624,37 @@ main.admin-shell.admin-shell--visible {
   min-width: 0;
 }
 
+.admin-pending-folder-group {
+  margin-top: 0.85rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.admin-pending-folder-group:first-child {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.admin-pending-folder-title {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-accent-gold);
+  margin-bottom: 0.45rem;
+  opacity: 0.9;
+}
+
+.admin-pending-more {
+  margin: 0.35rem 0 0;
+  padding-left: 0.15rem;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.55);
+  font-style: italic;
+}
+
 .admin-modal-inner .modal-footer {
   margin-top: 1.5rem;
   padding-top: 1rem;
@@ -628,6 +685,58 @@ main.admin-shell.admin-shell--visible {
 .admin-modal-inner .modal-footer .btn-modal-cancel:hover {
   border-color: var(--color-brand);
   color: var(--color-brand);
+}
+
+.admin-upload-progress {
+  flex: 1 1 100%;
+  width: 100%;
+  margin-bottom: 0.25rem;
+}
+
+.admin-upload-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.4rem;
+}
+
+.admin-upload-progress-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.admin-upload-progress-pct {
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-accent-gold);
+}
+
+.admin-upload-progress-track {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.admin-upload-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--color-brand) 0%, var(--color-accent-gold) 100%);
+  transition: width 0.25s ease;
+}
+
+.admin-upload-progress-meta {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.admin-modal-inner .modal-footer .btn-modal-cancel:disabled,
+.admin-modal-inner .modal-footer .btn-modal-save:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 /* Confirmação de exclusão (substitui window.confirm) */
